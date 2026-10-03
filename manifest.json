@@ -1,0 +1,9 @@
+{
+  "id": "tbpedia-update",
+  "name": "Tbpedia Update",
+  "version": "1.0.0",
+  "minAppVersion": "1.6.0",
+  "description": "Safely installs approved Tbpedia content releases.",
+  "author": "Tbpedia",
+  "isDesktopOnly": false
+}

@@ -1,0 +1,21 @@
+name = "tbpedia-update-api"
+main = "src/index.ts"
+compatibility_date = "2026-10-03"
+workers_dev = true
+
+# Set the zone name to the Cloudflare zone that owns tbpedia.org before deploying.
+routes = [{ pattern = "cfupdate.tbpedia.org/*", zone_name = "tbpedia.org" }]
+
+[[kv_namespaces]]
+binding = "CONFIG"
+id = "REPLACE_WITH_PRODUCTION_CONFIG_KV_ID"
+
+[vars]
+# Comma-separated hostnames, never URLs. Keep this list aligned with approved mirrors.
+UPSTREAM_ALLOWLIST = "REPLACE_WITH_APPROVED_HOSTS"
+# Comma-separated browser origins allowed by the Worker. Obsidian desktop requests may have no Origin.
+CORS_ORIGINS = "app://obsidian.md,obsidian://app"
+
+# Set these using `wrangler secret put`, never in this file:
+# NOCODB_BASE_URL      e.g. https://nocodb.example.org
+# TRANSACTION_SECRET   random 32+ byte value used to authorize a transaction

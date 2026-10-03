@@ -1,0 +1,82 @@
+import { MANAGED_ROOTS, ReleaseEntry, ReleaseManifest } from "./types";
+import { assertManagedPath, normalizePath } from "./path-policy";
+
+const REQUIRED_STRING_FIELDS = ["title", "minimumPluginVersion", "minimumObsidianVersion"] as const;
+
+export function parseAndValidateManifest(input: unknown): ReleaseManifest {
+  if (!isRecord(input)) throw new Error("Release manifest must be a JSON object.");
+  for (const forbidden of ["signature", "payload", "collectionKey", "sha256", "size", "downloadUrl", "url"]) {
+    if (forbidden in input) throw new Error(`Manifest contains unsupported field: ${forbidden}.`);
+  }
+  if (input.schemaVersion !== 2 || input.product !== "Tbpedia-Distribute" || input.plugin !== "tbpedia-update") throw new Error("This is not a supported incremental Tbpedia release manifest.");
+  if (input.channel !== "stable") throw new Error("Only the stable release channel is supported.");
+  for (const field of REQUIRED_STRING_FIELDS) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Manifest field ${field} is invalid.`);
+  if (!isRecord(input.collection) || !isCollectionPart(input.collection.language, "code") || !isCollectionPart(input.collection.series, "id") || !isCollectionPart(input.collection.edition, "id") || typeof input.collection.installRoot !== "string") throw new Error("Collection identity is invalid.");
+
+  const collection = input.collection as ReleaseManifest["collection"];
+  const expectedRoot = [collection.language.folder, collection.series.folder, collection.edition.folder].join("/");
+  if (normalizePath(collection.installRoot) !== normalizePath(expectedRoot)) throw new Error("installRoot does not match collection folders.");
+  if (!Array.isArray(input.managedRoots) || !sameSet(input.managedRoots, [...MANAGED_ROOTS])) throw new Error("managedRoots does not match the approved boundary.");
+  if (!Array.isArray(input.releases) || input.releases.length === 0) throw new Error("releases must be a non-empty array.");
+
+  const releases = input.releases.map((entry) => parseRelease(entry, normalizePath(collection.installRoot)));
+  const ids = new Set<string>();
+  for (let index = 0; index < releases.length; index += 1) {
+    const release = releases[index];
+    if (ids.has(release.releaseId)) throw new Error(`Duplicate releaseId: ${release.releaseId}.`);
+    ids.add(release.releaseId);
+    if (index > 0 && compareRelease(releases[index - 1], release) >= 0) throw new Error("releases must be in strictly increasing version and publication order.");
+  }
+  return { ...input, releases } as ReleaseManifest;
+}
+
+function parseRelease(input: unknown, installRoot: string): ReleaseEntry {
+  if (!isRecord(input)) throw new Error("Each release must be an object.");
+  for (const field of ["releaseVersion", "releaseId", "publishedAt", "filename"] as const) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Release field ${field} is invalid.`);
+  const versionDate = parseVersionDate(input.releaseVersion);
+  if (!versionDate) throw new Error("releaseVersion must be a date-based version.");
+  const releaseId = parseReleaseId(input.releaseId);
+  if (!releaseId) throw new Error("releaseId must have the format YYYY-M-D.sequence, for example 2026-10-1.1.");
+  if (releaseId.year !== versionDate.year || releaseId.month !== versionDate.month || releaseId.day !== versionDate.day) throw new Error("releaseId date must match releaseVersion.");
+  if (Number.isNaN(Date.parse(input.publishedAt))) throw new Error("publishedAt must be ISO-8601.");
+  if (!Array.isArray(input.files) || !Array.isArray(input.deletions)) throw new Error("files and deletions must be arrays.");
+  const files = input.files.map((entry) => {
+    if (!isRecord(entry) || typeof entry.path !== "string") throw new Error("Each file entry needs a path.");
+    return { path: assertManagedPath(entry.path, installRoot) };
+  });
+  const deletions = input.deletions.map((path) => {
+    if (typeof path !== "string") throw new Error("Each deletion must be a path.");
+    return assertManagedPath(path, installRoot);
+  });
+  const allPaths = [...files.map((file) => file.path), ...deletions];
+  if (new Set(allPaths).size !== allPaths.length) throw new Error(`Release ${input.releaseId} contains duplicate or conflicting paths.`);
+  if (!isRecord(input.releaseNotes) || typeof input.releaseNotes.summary !== "string" || !["added", "updated", "removed"].every((key) => typeof input.releaseNotes[key] === "number" && input.releaseNotes[key] >= 0)) throw new Error("releaseNotes is invalid.");
+  return { releaseVersion: input.releaseVersion, releaseId: input.releaseId, publishedAt: input.publishedAt, filename: input.filename, files, deletions, releaseNotes: input.releaseNotes as ReleaseEntry["releaseNotes"] };
+}
+
+export function compareVersions(a: string, b: string): number {
+  const parse = (value: string) => value.replace(/^v/, "").split(/[.+-]/).slice(0, 3).map((part) => Number.parseInt(part, 10) || 0);
+  const left = parse(a); const right = parse(b);
+  for (let index = 0; index < 3; index += 1) if (left[index] !== right[index]) return left[index] - right[index];
+  return 0;
+}
+export function compareRelease(a: ReleaseEntry, b: ReleaseEntry): number {
+  const version = compareVersions(a.releaseVersion, b.releaseVersion);
+  if (version) return version;
+  const sequence = parseReleaseId(a.releaseId)!.sequence - parseReleaseId(b.releaseId)!.sequence;
+  return sequence || Date.parse(a.publishedAt) - Date.parse(b.publishedAt);
+}
+function parseVersionDate(value: string): { year: number; month: number; day: number } | undefined {
+  const match = /^(\d{4})\.(\d{1,2})\.(\d{1,2})(?:[-+][0-9A-Za-z.-]+)?$/.exec(value);
+  return match && validDate(Number(match[1]), Number(match[2]), Number(match[3])) ? { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) } : undefined;
+}
+function parseReleaseId(value: string): { year: number; month: number; day: number; sequence: number } | undefined {
+  const match = /^(\d{4})-(\d{1,2})-(\d{1,2})\.(\d+)$/.exec(value);
+  if (!match) return undefined;
+  const year = Number(match[1]); const month = Number(match[2]); const day = Number(match[3]); const sequence = Number(match[4]);
+  return validDate(year, month, day) && Number.isSafeInteger(sequence) && sequence >= 1 ? { year, month, day, sequence } : undefined;
+}
+function validDate(year: number, month: number, day: number): boolean { const date = new Date(Date.UTC(year, month - 1, day)); return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day; }
+function isCollectionPart(value: unknown, identity: "code" | "id"): value is Record<string, string> { return isRecord(value) && typeof value[identity] === "string" && typeof value.name === "string" && typeof value.folder === "string"; }
+function isRecord(value: unknown): value is Record<string, any> { return typeof value === "object" && value !== null && !Array.isArray(value); }
+function sameSet(values: unknown[], expected: string[]): boolean { return values.length === expected.length && new Set(values).size === values.length && values.every((value) => typeof value === "string" && expected.includes(value)); }
