@@ -93,7 +93,10 @@ export class UpdateService {
 
   private assertCompatible(manifest: ReleaseManifest): void {
     if (compareVersions(this.pluginVersion, manifest.minimumPluginVersion) < 0) throw new Error(`This release requires plugin ${manifest.minimumPluginVersion} or newer.`);
-    if (compareVersions(this.appVersion(), manifest.minimumObsidianVersion) < 0) throw new Error(`This release requires Obsidian ${manifest.minimumObsidianVersion} or newer.`);
+    const appVersion = this.appVersion();
+    // Obsidian does not expose a stable, typed version property to every plugin
+    // runtime. A missing value must not be interpreted as version 0.0.0.
+    if (appVersion && compareVersions(appVersion, manifest.minimumObsidianVersion) < 0) throw new Error(`This release requires Obsidian ${manifest.minimumObsidianVersion} or newer.`);
   }
 
   private async createTransaction(manifest: ReleaseManifest, release: ReleaseEntry): Promise<UpdateTransaction> {
@@ -101,7 +104,7 @@ export class UpdateService {
       title: manifest.title, version: release.releaseVersion, filename: release.filename, language: manifest.collection.language.code,
       series: manifest.collection.series.id, edition: manifest.collection.edition.id,
       device_type: Platform.isMobile ? "mobile" : "desktop", os: navigator.platform,
-      client_version: `${this.appVersion()}; plugin/${this.pluginVersion}`, user_agent: navigator.userAgent,
+      client_version: `${this.appVersion() ?? "unknown"}; plugin/${this.pluginVersion}`, user_agent: navigator.userAgent,
     });
     if (typeof response.id !== "string" || typeof response.token !== "string") throw new Error("Update service returned an invalid transaction.");
     return { id: response.id, token: response.token };
@@ -246,7 +249,12 @@ export class UpdateService {
     return json as Record<string, unknown>;
   }
 
-  private appVersion(): string { return (this.app as unknown as { version?: string }).version ?? "0.0.0"; }
+  private appVersion(): string | undefined {
+    const app = this.app as unknown as { version?: unknown; appVersion?: unknown; vault: { getConfig?: (key: string) => unknown } };
+    const globalApp = (globalThis as unknown as { app?: { version?: unknown; appVersion?: unknown } }).app;
+    const candidates = [app.version, app.appVersion, globalApp?.version, globalApp?.appVersion, app.vault.getConfig?.("appVersion")];
+    return candidates.find((value): value is string => typeof value === "string" && /^\d+\.\d+\.\d+/.test(value));
+  }
 }
 
 function authHeaders(transaction: UpdateTransaction): Record<string, string> { return { "X-Update-Transaction": transaction.id, "Authorization": `Bearer ${transaction.token}` }; }
