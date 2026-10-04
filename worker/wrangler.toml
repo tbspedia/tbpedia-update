@@ -8,7 +8,7 @@ routes = [{ pattern = "cfupdate.tbpedia.org/*", zone_name = "tbpedia.org" }]
 
 [[kv_namespaces]]
 binding = "CONFIG"
-id = "REPLACE_WITH_PRODUCTION_CONFIG_KV_ID"
+id = "c2eb669330e64a71927127a083c16826"
 
 [vars]
 # Comma-separated hostnames, never URLs. Keep this list aligned with approved mirrors.
