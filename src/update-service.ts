@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
-import { compareVersions, parseAndValidateManifest } from "./manifest";
+import { compareReleaseVersions, compareVersions, parseAndValidateManifest } from "./manifest";
 import { assertManagedPath, ensureNoPathConflicts } from "./path-policy";
 import { MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
 
@@ -83,7 +83,7 @@ export class UpdateService {
     const installedIndex = installed.releaseId ? manifest.releases.findIndex((release) => release.releaseId === installed.releaseId) : -1;
     if (installedIndex >= 0) return manifest.releases.slice(installedIndex + 1);
     if (!installed.releaseVersion) return manifest.releases;
-    return manifest.releases.filter((release) => compareVersions(release.releaseVersion, installed.releaseVersion!) > 0);
+    return manifest.releases.filter((release) => compareReleaseVersions(release.releaseVersion, installed.releaseVersion!) > 0);
   }
 
   private async fetchManifest(language: SupportedLanguage): Promise<ReleaseManifest> {

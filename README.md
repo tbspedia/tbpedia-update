@@ -47,7 +47,7 @@ The root index is intentionally small:
 
 Add a language to this index only after its language manifest is published and validated. The plugin directly requests its configured language path; it does not use the index during normal updates.
 
-For example, a vault recorded at `2026.9.30` receives the `2026.10.1` ZIP first and then the `2026.11.1` ZIP. Each release is downloaded, validated, backed up, committed, audited, and persisted separately. If the second release fails, the vault remains correctly installed through `2026.10.1`; the next run resumes with `2026.11.1`.
+For example, a vault recorded at `zh-tw-reading-standard-2026.9.30` receives the `zh-tw-reading-standard-2026.10.1` ZIP first and then the `zh-tw-reading-standard-2026.11.1` ZIP. Each release is downloaded, validated, backed up, committed, audited, and persisted separately. If the second release fails, the vault remains correctly installed through `zh-tw-reading-standard-2026.10.1`; the next run resumes with `zh-tw-reading-standard-2026.11.1`. Existing vaults with legacy date-only version records remain comparable during this transition.
 
 ```json
 {
@@ -65,8 +65,8 @@ For example, a vault recorded at `2026.9.30` receives the `2026.10.1` ZIP first 
   "minimumObsidianVersion": "1.6.0",
   "managedRoots": ["00 說明", "01 文集部", "02 開示部", "03 經藏部", "04 頌與戒律", "05 傳法部", "06 密法儀軌", "07 佛語典藏", "08 其他類別", "09 蓮香上師", "10 真佛宗", "20 專題", "50 列表", "60 導讀", "70 背景資料", "90 幫助", "98 下載資料", "99 Setting"],
   "releases": [
-    { "releaseVersion": "2026.10.1", "releaseId": "2026-10-1.1", "publishedAt": "2026-10-01T08:00:00Z", "filename": "tbpedia-2026.10.1.zip", "files": [{ "path": "01 文集部/new-note.md" }], "deletions": [], "releaseNotes": { "summary": "October additions", "added": 1, "updated": 0, "removed": 0 } },
-    { "releaseVersion": "2026.11.1", "releaseId": "2026-11-1.1", "publishedAt": "2026-11-01T08:00:00Z", "filename": "tbpedia-2026.11.1.zip", "files": [{ "path": "01 文集部/another-note.md" }], "deletions": [], "releaseNotes": { "summary": "November additions", "added": 1, "updated": 0, "removed": 0 } }
+    { "releaseVersion": "zh-tw-reading-standard-2026.10.1", "releaseId": "zh-tw-reading-standard-2026-10-1.1", "publishedAt": "2026-10-01T08:00:00Z", "filename": "zh-tw-reading-standard-2026-10-1.1.zip", "files": [{ "path": "01 文集部/new-note.md" }], "deletions": [], "releaseNotes": { "summary": "October additions", "added": 1, "updated": 0, "removed": 0 } },
+    { "releaseVersion": "zh-tw-reading-standard-2026.11.1", "releaseId": "zh-tw-reading-standard-2026-11-1.1", "publishedAt": "2026-11-01T08:00:00Z", "filename": "zh-tw-reading-standard-2026-11-1.1.zip", "files": [{ "path": "01 文集部/another-note.md" }], "deletions": [], "releaseNotes": { "summary": "November additions", "added": 1, "updated": 0, "removed": 0 } }
   ]
 }
 ```
@@ -100,6 +100,6 @@ The Worker offers opaque source discovery, bounded source probes, package stream
 
 `Updateinfo` needs the design-spec fields, especially `Language`, `Series`, `Edition`, `Title`, `Version`, `Filename`, `UpdateSource`, `UpdateLink`, `SourceId`, `Enabled`, `Priority`, `Regions`, and `SupportsRange`. `SourceId` must be unique and URL-safe (`A–Z`, `a–z`, `0–9`, `_`, `-`). The `Update` audit table uses the fields defined in the specification; the Worker records `initiated`, then `success` or `failed`.
 
-Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Use `releaseId` as `YYYY-M-D.sequence` (for example, `2026-10-1.2` is the second 1 October release). Append the release to that language’s `manifests/<language>/latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
+Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Build the readable release key from the manifest collection identity: `<language>-<series>-<edition>` in lowercase. Use `releaseVersion` as `<release-key>-YYYY.M.D` and `releaseId` as `<release-key>-YYYY-M-D.sequence`; for example, `zh-tw-reading-standard-2026-10-1.2` is the second 1 October release. The key in both fields must match the manifest’s `language.code`, `series.id`, and `edition.id`. Append the release to that language’s `manifests/<language>/latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
 
 When adding a new language, create and validate `manifests/<lowercase-language>/latest.json`, add its path to root `latest.json`, create the corresponding enabled `Updateinfo` rows, and then choose that language in a test vault’s plugin settings.

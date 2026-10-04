@@ -12,10 +12,12 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   if (input.channel !== "stable") throw new Error("Only the stable release channel is supported.");
   for (const field of REQUIRED_STRING_FIELDS) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Manifest field ${field} is invalid.`);
   if (!isRecord(input.collection) || !isCollectionPart(input.collection.language, "code") || !isCollectionPart(input.collection.series, "id") || !isCollectionPart(input.collection.edition, "id")) throw new Error("Collection identity is invalid.");
+  const collection = input.collection as ReleaseManifest["collection"];
+  const releaseKey = [collection.language.code, collection.series.id, collection.edition.id].join("-").toLowerCase();
   if (!Array.isArray(input.managedRoots) || !sameSet(input.managedRoots, [...MANAGED_ROOTS])) throw new Error("managedRoots does not match the approved boundary.");
   if (!Array.isArray(input.releases) || input.releases.length === 0) throw new Error("releases must be a non-empty array.");
 
-  const releases = input.releases.map(parseRelease);
+  const releases = input.releases.map((entry) => parseRelease(entry, releaseKey));
   const ids = new Set<string>();
   for (let index = 0; index < releases.length; index += 1) {
     const release = releases[index];
@@ -26,14 +28,14 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   return { ...input, releases } as ReleaseManifest;
 }
 
-function parseRelease(input: unknown): ReleaseEntry {
+function parseRelease(input: unknown, expectedKey: string): ReleaseEntry {
   if (!isRecord(input)) throw new Error("Each release must be an object.");
   for (const field of ["releaseVersion", "releaseId", "publishedAt", "filename"] as const) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Release field ${field} is invalid.`);
-  const versionDate = parseVersionDate(input.releaseVersion);
-  if (!versionDate) throw new Error("releaseVersion must be a date-based version.");
+  const version = parseReleaseVersion(input.releaseVersion);
+  if (!version || version.key !== expectedKey) throw new Error(`releaseVersion must have the format ${expectedKey}-YYYY.M.D.`);
   const releaseId = parseReleaseId(input.releaseId);
-  if (!releaseId) throw new Error("releaseId must have the format YYYY-M-D.sequence, for example 2026-10-1.1.");
-  if (releaseId.year !== versionDate.year || releaseId.month !== versionDate.month || releaseId.day !== versionDate.day) throw new Error("releaseId date must match releaseVersion.");
+  if (!releaseId || releaseId.key !== expectedKey) throw new Error(`releaseId must have the format ${expectedKey}-YYYY-M-D.sequence, for example ${expectedKey}-2026-10-1.1.`);
+  if (releaseId.year !== version.year || releaseId.month !== version.month || releaseId.day !== version.day) throw new Error("releaseId date must match releaseVersion.");
   if (Number.isNaN(Date.parse(input.publishedAt))) throw new Error("publishedAt must be ISO-8601.");
   if (!Array.isArray(input.files) || !Array.isArray(input.deletions)) throw new Error("files and deletions must be arrays.");
   const files = input.files.map((entry) => {
@@ -56,22 +58,29 @@ export function compareVersions(a: string, b: string): number {
   for (let index = 0; index < 3; index += 1) if (left[index] !== right[index]) return left[index] - right[index];
   return 0;
 }
+/** Compares readable collection release versions, while accepting legacy date-only stored versions. */
+export function compareReleaseVersions(a: string, b: string): number {
+  const left = parseReleaseVersion(a); const right = parseReleaseVersion(b);
+  if (!left || !right) return compareVersions(a, b);
+  return compareDates(left, right);
+}
 export function compareRelease(a: ReleaseEntry, b: ReleaseEntry): number {
-  const version = compareVersions(a.releaseVersion, b.releaseVersion);
+  const version = compareReleaseVersions(a.releaseVersion, b.releaseVersion);
   if (version) return version;
   const sequence = parseReleaseId(a.releaseId)!.sequence - parseReleaseId(b.releaseId)!.sequence;
   return sequence || Date.parse(a.publishedAt) - Date.parse(b.publishedAt);
 }
-function parseVersionDate(value: string): { year: number; month: number; day: number } | undefined {
-  const match = /^(\d{4})\.(\d{1,2})\.(\d{1,2})(?:[-+][0-9A-Za-z.-]+)?$/.exec(value);
-  return match && validDate(Number(match[1]), Number(match[2]), Number(match[3])) ? { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) } : undefined;
+function parseReleaseVersion(value: string): { key?: string; year: number; month: number; day: number } | undefined {
+  const match = /^(?:([a-z0-9]+(?:-[a-z0-9]+)*)-)?(\d{4})\.(\d{1,2})\.(\d{1,2})$/.exec(value);
+  return match && validDate(Number(match[2]), Number(match[3]), Number(match[4])) ? { key: match[1], year: Number(match[2]), month: Number(match[3]), day: Number(match[4]) } : undefined;
 }
-function parseReleaseId(value: string): { year: number; month: number; day: number; sequence: number } | undefined {
-  const match = /^(\d{4})-(\d{1,2})-(\d{1,2})\.(\d+)$/.exec(value);
+function parseReleaseId(value: string): { key?: string; year: number; month: number; day: number; sequence: number } | undefined {
+  const match = /^(?:([a-z0-9]+(?:-[a-z0-9]+)*)-)?(\d{4})-(\d{1,2})-(\d{1,2})\.(\d+)$/.exec(value);
   if (!match) return undefined;
-  const year = Number(match[1]); const month = Number(match[2]); const day = Number(match[3]); const sequence = Number(match[4]);
-  return validDate(year, month, day) && Number.isSafeInteger(sequence) && sequence >= 1 ? { year, month, day, sequence } : undefined;
+  const year = Number(match[2]); const month = Number(match[3]); const day = Number(match[4]); const sequence = Number(match[5]);
+  return validDate(year, month, day) && Number.isSafeInteger(sequence) && sequence >= 1 ? { key: match[1], year, month, day, sequence } : undefined;
 }
+function compareDates(a: { year: number; month: number; day: number }, b: { year: number; month: number; day: number }): number { return a.year - b.year || a.month - b.month || a.day - b.day; }
 function validDate(year: number, month: number, day: number): boolean { const date = new Date(Date.UTC(year, month - 1, day)); return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day; }
 function isCollectionPart(value: unknown, identity: "code" | "id"): value is Record<string, string> { return isRecord(value) && typeof value[identity] === "string" && value[identity].trim().length > 0; }
 function isRecord(value: unknown): value is Record<string, any> { return typeof value === "object" && value !== null && !Array.isArray(value); }
