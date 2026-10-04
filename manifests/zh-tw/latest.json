@@ -9,7 +9,7 @@
       "code": "zh-TW"
     },
     "series": {
-      "id": "true-buddha-encyclopedia-reading"
+      "id": "reading"
     },
     "edition": {
       "id": "standard"
@@ -28,7 +28,7 @@
       "releaseVersion": "2026.10.1",
       "releaseId": "2026-10-1.1",
       "publishedAt": "2026-10-01T08:00:00Z",
-      "filename": "tbpedia-2026.10.1.zip",
+      "filename": "zh-tw-reading-standard-2026-10-1.1.zip",
       "files": [
         {
           "path": "01 文集部/測試更新-2026-10-1.md"
@@ -46,7 +46,7 @@
       "releaseVersion": "2026.11.1",
       "releaseId": "2026-11-1.1",
       "publishedAt": "2026-11-01T08:00:00Z",
-      "filename": "tbpedia-2026.11.1.zip",
+      "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
       "files": [
         {
           "path": "01 文集部/測試更新-2026-11-1.md"
