@@ -15,7 +15,7 @@
       "id": "standard"
     }
   },
-  "minimumPluginVersion": "1.0.0",
+  "minimumPluginVersion": "1.1.0",
   "minimumObsidianVersion": "1.6.0",
   "managedRoots": [
     "00 說明", "01 文集部", "02 開示部", "03 經藏部", "04 頌與戒律",

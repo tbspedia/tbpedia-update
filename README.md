@@ -1,6 +1,6 @@
 # tbpedia-update
 
-An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker.
+An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history.
 
 ## Repository layout
 
@@ -61,7 +61,7 @@ For example, a vault recorded at `zh-tw-reading-standard-2026.9.30` receives the
     "series": { "id": "true-buddha-encyclopedia-reading" },
     "edition": { "id": "standard" }
   },
-  "minimumPluginVersion": "1.0.0",
+  "minimumPluginVersion": "1.1.0",
   "minimumObsidianVersion": "1.6.0",
   "managedRoots": ["00 說明", "01 文集部", "02 開示部", "03 經藏部", "04 頌與戒律", "05 傳法部", "06 密法儀軌", "07 佛語典藏", "08 其他類別", "09 蓮香上師", "10 真佛宗", "20 專題", "50 列表", "60 導讀", "70 背景資料", "90 幫助", "98 下載資料", "99 Setting"],
   "releases": [
