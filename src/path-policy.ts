@@ -10,16 +10,16 @@ export function normalizePath(value: string): string {
   return value.normalize("NFC").replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\.\//, "");
 }
 
-export function assertManagedPath(value: string, installRoot: string): string {
+/** Paths are always relative to the current vault root. */
+export function assertManagedPath(value: string): string {
   const path = normalizePath(value);
   if (!path || path.includes("\0") || path.startsWith("/") || /^[A-Za-z]:/.test(path)) throw new Error(`Unsafe path: ${value}`);
   const segments = path.split("/");
   if (segments.some((segment) => !segment || segment === "." || segment === ".." || /[<>:"|?*]/.test(segment) || RESERVED.test(segment))) {
     throw new Error(`Unsafe path: ${value}`);
   }
-  if (path.startsWith(`${installRoot}/`)) {
-    const child = path.slice(installRoot.length + 1).split("/")[0];
-    if (!(MANAGED_ROOTS as readonly string[]).includes(child)) throw new Error(`Path is outside managed roots: ${value}`);
+  const topLevel = segments[0];
+  if ((MANAGED_ROOTS as readonly string[]).includes(topLevel)) {
     return path;
   }
   if (OBSIDIAN_FILES.has(path) || (!path.includes("/") && !path.startsWith("."))) return path;

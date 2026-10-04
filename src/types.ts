@@ -28,10 +28,9 @@ export interface ReleaseManifest {
   channel: "stable";
   title: string;
   collection: {
-    language: { code: string; name: string; folder: string };
-    series: { id: string; name: string; folder: string };
-    edition: { id: string; name: string; folder: string };
-    installRoot: string;
+    language: { code: string };
+    series: { id: string };
+    edition: { id: string };
   };
   minimumPluginVersion: string;
   minimumObsidianVersion: string;

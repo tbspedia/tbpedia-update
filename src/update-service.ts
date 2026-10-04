@@ -1,7 +1,7 @@
 import JSZip from "jszip";
 import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
 import { compareVersions, parseAndValidateManifest } from "./manifest";
-import { assertManagedPath, ensureNoPathConflicts, normalizePath } from "./path-policy";
+import { assertManagedPath, ensureNoPathConflicts } from "./path-policy";
 import { MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
 
 const STAGING_DIR = ".obsidian/plugins/tbpedia-update/.staging";
@@ -161,10 +161,10 @@ export class UpdateService {
     const actual: string[] = []; let totalUncompressed = 0;
     for (const entry of Object.values(zip.files)) {
       const entryName = entry.dir ? entry.name.replace(/\/$/, "") : entry.name;
-      if (entryName) assertManagedPath(entryName, normalizePath(manifest.collection.installRoot));
+      if (entryName) assertManagedPath(entryName);
       if (entry.dir) continue;
       if (++actual.length > MAX_FILES) throw new Error("Release archive has too many files.");
-      const path = assertManagedPath(entry.name, normalizePath(manifest.collection.installRoot));
+      const path = assertManagedPath(entry.name);
       actual.push(path);
       const size = zipEntrySize(entry);
       if (size === undefined) throw new Error("Release archive has an entry with no size metadata.");

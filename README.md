@@ -57,20 +57,21 @@ For example, a vault recorded at `2026.9.30` receives the `2026.10.1` ZIP first 
   "channel": "stable",
   "title": "真佛百科閱讀系列標準版本",
   "collection": {
-    "language": { "code": "zh-TW", "name": "繁體中文", "folder": "繁體中文" },
-    "series": { "id": "true-buddha-encyclopedia-reading", "name": "真佛百科閱讀系列", "folder": "真佛百科閱讀系列" },
-    "edition": { "id": "standard", "name": "標準版本", "folder": "標準版本" },
-    "installRoot": "繁體中文/真佛百科閱讀系列/標準版本"
+    "language": { "code": "zh-TW" },
+    "series": { "id": "true-buddha-encyclopedia-reading" },
+    "edition": { "id": "standard" }
   },
   "minimumPluginVersion": "1.0.0",
   "minimumObsidianVersion": "1.6.0",
   "managedRoots": ["00 說明", "01 文集部", "02 開示部", "03 經藏部", "04 頌與戒律", "05 傳法部", "06 密法儀軌", "07 佛語典藏", "08 其他類別", "09 蓮香上師", "10 真佛宗", "20 專題", "50 列表", "60 導讀", "70 背景資料", "90 幫助", "98 下載資料", "99 Setting"],
   "releases": [
-    { "releaseVersion": "2026.10.1", "releaseId": "2026-10-1.1", "publishedAt": "2026-10-01T08:00:00Z", "filename": "tbpedia-2026.10.1.zip", "files": [{ "path": "繁體中文/真佛百科閱讀系列/標準版本/01 文集部/new-note.md" }], "deletions": [], "releaseNotes": { "summary": "October additions", "added": 1, "updated": 0, "removed": 0 } },
-    { "releaseVersion": "2026.11.1", "releaseId": "2026-11-1.1", "publishedAt": "2026-11-01T08:00:00Z", "filename": "tbpedia-2026.11.1.zip", "files": [{ "path": "繁體中文/真佛百科閱讀系列/標準版本/01 文集部/another-note.md" }], "deletions": [], "releaseNotes": { "summary": "November additions", "added": 1, "updated": 0, "removed": 0 } }
+    { "releaseVersion": "2026.10.1", "releaseId": "2026-10-1.1", "publishedAt": "2026-10-01T08:00:00Z", "filename": "tbpedia-2026.10.1.zip", "files": [{ "path": "01 文集部/new-note.md" }], "deletions": [], "releaseNotes": { "summary": "October additions", "added": 1, "updated": 0, "removed": 0 } },
+    { "releaseVersion": "2026.11.1", "releaseId": "2026-11-1.1", "publishedAt": "2026-11-01T08:00:00Z", "filename": "tbpedia-2026.11.1.zip", "files": [{ "path": "01 文集部/another-note.md" }], "deletions": [], "releaseNotes": { "summary": "November additions", "added": 1, "updated": 0, "removed": 0 } }
   ]
 }
 ```
+
+ZIP entry paths are always relative to the current vault root. Do not include language, collection, series, edition, or `installRoot` folders in the manifest or ZIP. The collection identity values remain only for choosing the correct language manifest and authorised update source.
 
 ## Configure and deploy the Worker
 
