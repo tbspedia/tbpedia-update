@@ -30,6 +30,7 @@ interface SourceRow {
 }
 
 const ZIP_CONTENT_TYPES = new Set(["application/zip", "application/x-zip-compressed", "application/octet-stream"]);
+const WORKER_VERSION = "1.1.0";
 const MAX_PROBE_BYTES = 65_536;
 const PROBE_TIMEOUT_MS = 8_000;
 
@@ -195,7 +196,7 @@ async function timingSafeEqual(a: string, b: string): Promise<boolean> { if (a.l
 function b64url(value: string | Uint8Array): string { const bytes = typeof value === "string" ? new TextEncoder().encode(value) : value; let binary = ""; for (const byte of bytes) binary += String.fromCharCode(byte); return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
 function fromB64url(value: string): Uint8Array { const base64 = value.replace(/-/g, "+").replace(/_/g, "/"); const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "=")); return Uint8Array.from(binary, (character) => character.charCodeAt(0)); }
 function json(value: unknown, status = 200): Response { return new Response(JSON.stringify(value), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" } }); }
-function cors(response: Response, request: Request, env: Env): Response { const origin = request.headers.get("Origin"); const allowed = (env.CORS_ORIGINS ?? "").split(",").map((item) => item.trim()); const headers = new Headers(response.headers); if (origin && allowed.includes(origin)) headers.set("Access-Control-Allow-Origin", origin); headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Update-Transaction"); headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS"); headers.set("Vary", "Origin"); return new Response(response.body, { status: response.status, headers }); }
+function cors(response: Response, request: Request, env: Env): Response { const origin = request.headers.get("Origin"); const allowed = (env.CORS_ORIGINS ?? "").split(",").map((item) => item.trim()); const headers = new Headers(response.headers); headers.set("X-Tbpedia-Worker-Version", WORKER_VERSION); if (origin && allowed.includes(origin)) headers.set("Access-Control-Allow-Origin", origin); headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Update-Transaction"); headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS"); headers.set("Vary", "Origin"); return new Response(response.body, { status: response.status, headers }); }
 async function readJson(request: Request): Promise<Record<string, any>> { try { const value = await request.json(); if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(); return value as Record<string, any>; } catch { throw new HttpError(400, "Request body must be JSON."); } }
 function isEnabled(row: SourceRow): boolean { return row.Enabled === true || row.Enabled === 1 || row.Enabled === "true"; }
 function asBoolean(value: unknown): boolean { return value === true || value === 1 || value === "true"; }

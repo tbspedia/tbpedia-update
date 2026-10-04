@@ -8,6 +8,7 @@ All notable changes to Tbpedia Update are recorded here. Plugin versions use sem
 
 - Human-readable content release identifiers based on the collection key, such as `zh-tw-reading-standard-2026.10.1` and `zh-tw-reading-standard-2026-10-1.1`.
 - This changelog as the source of plugin change history.
+- The `X-Tbpedia-Worker-Version` response header for deployed Worker version checks.
 
 ### Changed
 
