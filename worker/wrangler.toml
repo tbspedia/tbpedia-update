@@ -1,7 +1,9 @@
-name = "tbpedia-update-api"
+name = "tbpedia-update"
 main = "src/index.ts"
 compatibility_date = "2026-10-03"
 workers_dev = true
+
+observability = { enabled = true, logs = { enabled = true, invocation_logs = true, persist = true } }
 
 # Set the zone name to the Cloudflare zone that owns tbpedia.org before deploying.
 routes = [{ pattern = "cfupdate.tbpedia.org/*", zone_name = "tbpedia.org" }]
@@ -12,7 +14,7 @@ id = "c2eb669330e64a71927127a083c16826"
 
 [vars]
 # Comma-separated hostnames, never URLs. Keep this list aligned with approved mirrors.
-UPSTREAM_ALLOWLIST = "REPLACE_WITH_APPROVED_HOSTS"
+UPSTREAM_ALLOWLIST = "download.tbpedia.org,www.tbpedia.org,drive.google.com,onedrive.live.com"
 # Comma-separated browser origins allowed by the Worker. Obsidian desktop requests may have no Origin.
 CORS_ORIGINS = "app://obsidian.md,obsidian://app"
 
