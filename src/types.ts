@@ -1,5 +1,8 @@
-export const MANIFEST_URL = "https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/latest.json";
+export const MANIFEST_BASE_URL = "https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests";
 export const WORKER_URL = "https://cfupdate.tbpedia.org";
+
+export const SUPPORTED_LANGUAGES = ["en", "ja", "fr", "es", "de", "nl", "sv", "ko", "zh-TW", "zh-CN", "vi", "id", "th", "bo"] as const;
+export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
 export const MANAGED_ROOTS = [
   "00 說明", "01 文集部", "02 開示部", "03 經藏部", "04 頌與戒律",
@@ -44,6 +47,7 @@ export interface InstalledState {
 }
 
 export interface PluginData {
+  languageCode?: SupportedLanguage;
   installed: InstalledState;
 }
 

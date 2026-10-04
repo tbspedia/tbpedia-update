@@ -2,7 +2,7 @@ import JSZip from "jszip";
 import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
 import { compareVersions, parseAndValidateManifest } from "./manifest";
 import { assertManagedPath, ensureNoPathConflicts, normalizePath } from "./path-policy";
-import { MANIFEST_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
+import { MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
 
 const STAGING_DIR = ".obsidian/plugins/tbpedia-update/.staging";
 const MAX_ARCHIVE_BYTES = 1024 * 1024 * 1024;
@@ -18,7 +18,10 @@ export class UpdateService {
   ) {}
 
   async check(): Promise<UpdateBatch | null> {
-    const manifest = await this.fetchManifest();
+    const language = this.getData().languageCode;
+    if (!language) throw new Error("Choose this vault’s Tbpedia language in the plugin settings first.");
+    const manifest = await this.fetchManifest(language);
+    if (manifest.collection.language.code !== language) throw new Error("The selected language does not match this release manifest.");
     this.assertCompatible(manifest);
     const releases = this.missingReleases(manifest);
     return releases.length ? { manifest, releases } : null;
@@ -83,8 +86,8 @@ export class UpdateService {
     return manifest.releases.filter((release) => compareVersions(release.releaseVersion, installed.releaseVersion!) > 0);
   }
 
-  private async fetchManifest(): Promise<ReleaseManifest> {
-    const response = await requestUrl({ url: MANIFEST_URL, method: "GET", throw: false });
+  private async fetchManifest(language: SupportedLanguage): Promise<ReleaseManifest> {
+    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/latest.json`, method: "GET", throw: false });
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
     try { json = response.json; } catch { throw new Error("Release metadata is not valid JSON."); }

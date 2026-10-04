@@ -1,6 +1,6 @@
-import { App, Modal, Notice, Plugin, Setting } from "obsidian";
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { UpdateService } from "./update-service";
-import { PluginData, UpdateBatch } from "./types";
+import { PluginData, SUPPORTED_LANGUAGES, UpdateBatch } from "./types";
 
 const DEFAULT_DATA: PluginData = { installed: { ownedFiles: [], appliedReleaseIds: [] } };
 
@@ -12,6 +12,7 @@ export default class TbpediaUpdatePlugin extends Plugin {
     const saved = await this.loadData() ?? {};
     this.data = { ...DEFAULT_DATA, ...saved, installed: { ownedFiles: [], appliedReleaseIds: [], ...saved.installed } };
     this.updater = new UpdateService(this.app, this.manifest.version, () => this.data, async (data) => { this.data = data; await this.saveData(data); });
+    this.addSettingTab(new TbpediaUpdateSettingsTab(this.app, this));
     this.addRibbonIcon("download", "Check Tbpedia updates", () => void this.checkForUpdate());
     this.addCommand({ id: "check-for-content-update", name: "Check for content update", callback: () => void this.checkForUpdate() });
   }
@@ -22,6 +23,31 @@ export default class TbpediaUpdatePlugin extends Plugin {
       if (!manifest) { new Notice("Your Tbpedia content is up to date."); return; }
       new UpdateModal(this.app, manifest, (progress) => this.updater.install(manifest, progress)).open();
     } catch (error) { new Notice(`Could not check for Tbpedia updates: ${message(error)}`); }
+  }
+
+  async setLanguageCode(languageCode: PluginData["languageCode"]): Promise<void> {
+    this.data = { ...this.data, languageCode };
+    await this.saveData(this.data);
+  }
+
+  get languageCode(): PluginData["languageCode"] { return this.data.languageCode; }
+}
+
+class TbpediaUpdateSettingsTab extends PluginSettingTab {
+  constructor(app: App, private readonly plugin: TbpediaUpdatePlugin) { super(app, plugin); }
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.createEl("h2", { text: "Tbpedia Update" });
+    new Setting(containerEl)
+      .setName("Vault language")
+      .setDesc("Select the language of this installed Tbpedia collection. It determines which release history is used.")
+      .addDropdown((dropdown) => {
+        dropdown.addOption("", "Choose language…");
+        for (const code of SUPPORTED_LANGUAGES) dropdown.addOption(code, code);
+        dropdown.setValue(this.plugin.languageCode ?? "");
+        dropdown.onChange(async (value) => { await this.plugin.setLanguageCode(value as PluginData["languageCode"]); });
+      });
   }
 }
 

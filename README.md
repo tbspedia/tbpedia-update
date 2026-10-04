@@ -1,12 +1,12 @@
 # tbpedia-update
 
-An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes only from the fixed GitHub `latest.json`; mirror links and NocoDB credentials remain in the Worker.
+An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker.
 
 ## Repository layout
 
 - `src/` — Obsidian plugin source. `main.js` is the built plugin bundle and `manifest.json` is the Obsidian plugin manifest.
 - `worker/` — Cloudflare Worker source and Wrangler configuration.
-- `latest-manifest-template.xlsx` — authoring template for a public `latest.json`; do not put mirror URLs, hashes, signatures, or credentials into it.
+- `latest-manifest-template.xlsx` — authoring template for a public language `latest.json`; do not put mirror URLs, hashes, signatures, or credentials into it.
 
 ## Build the plugin
 
@@ -18,13 +18,13 @@ pnpm run check
 pnpm run build
 ```
 
-Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, then enable **Tbpedia Update**. The plugin fetches only `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/latest.json`.
+Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, enable **Tbpedia Update**, then select the vault language in plugin settings. For example, a Traditional Chinese vault retrieves `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests/zh-tw/latest.json`.
 
 The plugin validates the collection tuple, exact approved managed roots, release compatibility, every archive path, archive/expanded-size limits, collisions, and the exact manifest file inventory. It creates a vault-local staging and backup transaction, refuses to overwrite unowned files, and restores backed-up files if applying the release fails.
 
 ## Incremental release history
 
-`latest.json` now uses `schemaVersion: 2` and retains an ordered `releases` array. Each entry has its own ZIP, source rows in NocoDB, exact `files` inventory, explicit `deletions`, and release notes. A ZIP contains only that release's new or changed managed Markdown files; it is not a full vault snapshot.
+Each language has its own `manifests/<language>/latest.json`, using `schemaVersion: 2` and retaining an ordered `releases` array. The root `latest.json` is only a small public manifest index. Each release entry has its own ZIP, source rows in NocoDB, exact `files` inventory, explicit `deletions`, and release notes. A ZIP contains only that release's new or changed managed Markdown files; it is not a full vault snapshot.
 
 For example, a vault recorded at `2026.9.30` receives the `2026.10.1` ZIP first and then the `2026.11.1` ZIP. Each release is downloaded, validated, backed up, committed, audited, and persisted separately. If the second release fails, the vault remains correctly installed through `2026.10.1`; the next run resumes with `2026.11.1`.
 
@@ -36,7 +36,7 @@ For example, a vault recorded at `2026.9.30` receives the `2026.10.1` ZIP first 
   "channel": "stable",
   "title": "真佛百科閱讀系列標準版本",
   "collection": {
-    "language": { "code": "zh-Hant", "name": "繁體中文", "folder": "繁體中文" },
+    "language": { "code": "zh-TW", "name": "繁體中文", "folder": "繁體中文" },
     "series": { "id": "true-buddha-encyclopedia-reading", "name": "真佛百科閱讀系列", "folder": "真佛百科閱讀系列" },
     "edition": { "id": "standard", "name": "標準版本", "folder": "標準版本" },
     "installRoot": "繁體中文/真佛百科閱讀系列/標準版本"
@@ -78,4 +78,4 @@ The Worker offers opaque source discovery, bounded source probes, package stream
 
 `Updateinfo` needs the design-spec fields, especially `Language`, `Series`, `Edition`, `Title`, `Version`, `Filename`, `UpdateSource`, `UpdateLink`, `SourceId`, `Enabled`, `Priority`, `Regions`, and `SupportsRange`. `SourceId` must be unique and URL-safe (`A–Z`, `a–z`, `0–9`, `_`, `-`). The `Update` audit table uses the fields defined in the specification; the Worker records `initiated`, then `success` or `failed`.
 
-Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Use `releaseId` as `YYYY-M-D.sequence` (for example, `2026-10-1.2` is the second 1 October release). Append the release to `latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
+Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Use `releaseId` as `YYYY-M-D.sequence` (for example, `2026-10-1.2` is the second 1 October release). Append the release to that language’s `manifests/<language>/latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
