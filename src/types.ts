@@ -35,6 +35,7 @@ export interface ReleaseManifest {
     edition: { id: string };
   };
   minimumPluginVersion: string;
+  Collection: string;
   minimumObsidianVersion: string;
   managedRoots: string[];
   releases: ReleaseEntry[];
@@ -51,6 +52,7 @@ export interface PluginData {
   languageCode?: SupportedLanguage;
   seriesId: string;
   editionId: string;
+  Collection: string;
   installed: InstalledState;
 }
 

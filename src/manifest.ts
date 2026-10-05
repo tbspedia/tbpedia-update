@@ -10,6 +10,7 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   }
   if (input.schemaVersion !== 2 || input.product !== "Tbpedia-Distribute" || input.plugin !== "tbpedia-update") throw new Error("This is not a supported incremental Tbpedia release manifest.");
   if (input.channel !== "stable") throw new Error("Only the stable release channel is supported.");
+  if (typeof input.Collection !== "string" || !/^V[1-9]\d*$/.test(input.Collection)) throw new Error("Collection must be a version such as V1.");
   for (const field of REQUIRED_STRING_FIELDS) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Manifest field ${field} is invalid.`);
   if (!isRecord(input.collection) || !isCollectionPart(input.collection.language, "code") || !isCollectionPart(input.collection.series, "id") || !isCollectionPart(input.collection.edition, "id")) throw new Error("Collection identity is invalid.");
   const collection = input.collection as ReleaseManifest["collection"];

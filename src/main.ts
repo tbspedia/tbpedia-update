@@ -3,7 +3,7 @@ import { OverwriteDecision, UpdateService } from "./update-service";
 import { PluginData, SUPPORTED_LANGUAGES, UpdateBatch } from "./types";
 import { migrateOwnedFiles } from "./ownership";
 
-const DEFAULT_DATA: PluginData = { seriesId: "reading", editionId: "standard", installed: { ownedFiles: {}, appliedReleaseIds: [] } };
+const DEFAULT_DATA: PluginData = { seriesId: "reading", editionId: "standard", Collection: "V1", installed: { ownedFiles: {}, appliedReleaseIds: [] } };
 
 export default class TbpediaUpdatePlugin extends Plugin {
   private data: PluginData = DEFAULT_DATA;
@@ -39,8 +39,8 @@ export default class TbpediaUpdatePlugin extends Plugin {
   }
 
   private async persistData(data: PluginData): Promise<void> {
-    const { languageCode, seriesId, editionId, ...rest } = data;
-    this.data = { languageCode, seriesId, editionId, ...rest };
+    const { languageCode, seriesId, editionId, Collection, ...rest } = data;
+    this.data = { languageCode, seriesId, editionId, Collection, ...rest };
     await this.saveData(this.data);
   }
 

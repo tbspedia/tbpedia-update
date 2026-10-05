@@ -7,13 +7,15 @@
       "language": "zh-TW",
       "series": "reading",
       "edition": "standard",
-      "path": "manifests/zh-tw/reading/standard/latest.json"
+      "Collection": "V1",
+      "path": "manifests/zh-tw/reading/standard/V1/latest.json"
     },
     {
       "language": "zh-TW",
       "series": "reading",
       "edition": "advanced",
-      "path": "manifests/zh-tw/reading/advanced/latest.json"
+      "Collection": "V1",
+      "path": "manifests/zh-tw/reading/advanced/V1/latest.json"
     }
   ]
 }
