@@ -48,17 +48,13 @@
         {
           "path": "01 文集部/測試更新-2026-10-1.md",
           "change": "+"
-        },
-        {
-          "path": "01 文集部/測試更新-2026-10-2.md",
-          "change": "~"
         }
       ],
       "deletions": [],
       "releaseNotes": {
         "summary": "測試：2026 年 10 月第 1 次增量更新。",
         "added": 1,
-        "updated": 1,
+        "updated": 0,
         "removed": 0
       }
     },
