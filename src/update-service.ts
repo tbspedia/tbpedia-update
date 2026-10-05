@@ -2,12 +2,16 @@ import JSZip from "jszip";
 import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
 import { compareReleaseVersions, compareVersions, parseAndValidateManifest } from "./manifest";
 import { assertManagedPath, ensureNoPathConflicts } from "./path-policy";
+import { currentOwnedPaths, migrateOwnedFiles } from "./ownership";
 import { MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
 
 const STAGING_DIR = ".obsidian/plugins/tbpedia-update/.staging";
 const MAX_ARCHIVE_BYTES = 1024 * 1024 * 1024;
 const MAX_FILES = 30_000;
 const MAX_UNCOMPRESSED_BYTES = 4 * 1024 * 1024 * 1024;
+
+export type OverwriteDecision = "overwrite" | "overwrite-all" | "cancel";
+export type ConfirmOverwrite = (path: string) => Promise<OverwriteDecision>;
 
 export class UpdateService {
   constructor(
@@ -20,24 +24,38 @@ export class UpdateService {
   async check(): Promise<UpdateBatch | null> {
     const language = this.getData().languageCode;
     if (!language) throw new Error("Choose this vault’s Tbpedia language in the plugin settings first.");
-    const manifest = await this.fetchManifest(language);
-    if (manifest.collection.language.code !== language) throw new Error("The selected language does not match this release manifest.");
+    const edition = this.getData().editionId;
+    const manifest = await this.fetchManifest(language, edition);
+    this.assertSelectedCollection(manifest);
     this.assertCompatible(manifest);
+    const data = this.getData();
+    await this.saveData({ ...data, seriesId: manifest.collection.series.id, editionId: manifest.collection.edition.id,
+      installed: { ...data.installed, ownedFiles: migrateOwnedFiles(data.installed.ownedFiles, data.installed, manifest) } });
     const releases = this.missingReleases(manifest);
     return releases.length ? { manifest, releases } : null;
   }
 
-  async install(batch: UpdateBatch, progress: (message: string) => void): Promise<void> {
+  async install(batch: UpdateBatch, progress: (message: string) => void, confirmOverwrite?: ConfirmOverwrite): Promise<void> {
+    this.assertSelectedCollection(batch.manifest);
     this.assertCompatible(batch.manifest);
+    // Approval lasts only for this installation, including subsequent releases.
+    let overwriteAll = false;
+    const approveOverwrite: ConfirmOverwrite = async (path) => {
+      if (overwriteAll) return "overwrite";
+      const decision = await confirmOverwrite?.(path) ?? "cancel";
+      if (decision === "overwrite-all") overwriteAll = true;
+      return decision;
+    };
     for (let index = 0; index < batch.releases.length; index += 1) {
+      this.assertSelectedCollection(batch.manifest);
       const release = batch.releases[index];
       progress(`Release ${index + 1} of ${batch.releases.length}: ${release.releaseVersion}`);
-      await this.installRelease(batch.manifest, release, progress);
+      await this.installRelease(batch.manifest, release, progress, approveOverwrite);
     }
     new Notice(`Tbpedia updated through ${batch.releases.at(-1)!.releaseVersion}.`);
   }
 
-  private async installRelease(manifest: ReleaseManifest, release: ReleaseEntry, progress: (message: string) => void): Promise<void> {
+  private async installRelease(manifest: ReleaseManifest, release: ReleaseEntry, progress: (message: string) => void, confirmOverwrite: ConfirmOverwrite): Promise<void> {
     let transaction: UpdateTransaction | undefined;
     let committed = false;
     try {
@@ -66,7 +84,7 @@ export class UpdateService {
       archive = await this.app.vault.adapter.readBinary(stagingPath);
       const plan = await this.validateArchive(archive, manifest, release);
       progress("Applying managed files…");
-      await this.apply(plan, archive, progress);
+      await this.apply(plan, archive, progress, confirmOverwrite);
       committed = true;
       try { await this.report(transaction, "success"); }
       catch { new Notice("Tbpedia was updated, but the service could not record the success audit."); }
@@ -83,15 +101,28 @@ export class UpdateService {
     const installedIndex = installed.releaseId ? manifest.releases.findIndex((release) => release.releaseId === installed.releaseId) : -1;
     if (installedIndex >= 0) return manifest.releases.slice(installedIndex + 1);
     if (!installed.releaseVersion) return manifest.releases;
+    const key = [manifest.collection.language.code, manifest.collection.series.id, manifest.collection.edition.id].join("-").toLowerCase();
+    if (!installed.releaseVersion.startsWith(`${key}-`) && !/^\d{4}\./.test(installed.releaseVersion)) {
+      return manifest.releases.filter((release) => !installed.appliedReleaseIds.includes(release.releaseId));
+    }
     return manifest.releases.filter((release) => compareReleaseVersions(release.releaseVersion, installed.releaseVersion!) > 0);
   }
 
-  private async fetchManifest(language: SupportedLanguage): Promise<ReleaseManifest> {
-    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/latest.json`, method: "GET", throw: false });
+  private async fetchManifest(language: SupportedLanguage, edition: string): Promise<ReleaseManifest> {
+    if (edition !== "standard" && edition !== "advanced") throw new Error("Choose a supported Tbpedia edition in the plugin settings.");
+    const editionPath = edition === "advanced" ? "/advanced" : "";
+    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}${editionPath}/latest.json`, method: "GET", throw: false });
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
     try { json = response.json; } catch { throw new Error("Release metadata is not valid JSON."); }
     return parseAndValidateManifest(json);
+  }
+
+  private assertSelectedCollection(manifest: ReleaseManifest): void {
+    const data = this.getData();
+    if (manifest.collection.language.code !== data.languageCode || manifest.collection.series.id !== data.seriesId || manifest.collection.edition.id !== data.editionId) {
+      throw new Error("The release manifest does not match the selected language, series, and edition. Check for updates again after changing settings.");
+    }
   }
 
   private assertCompatible(manifest: ReleaseManifest): void {
@@ -157,13 +188,13 @@ export class UpdateService {
 
   private async validateArchive(archive: ArrayBuffer, manifest: ReleaseManifest, release: ReleaseEntry): Promise<UpdatePlan> {
     const zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false });
-    const expected = new Set(release.files.map((file) => file.path));
+    const expected = new Set(release.files.filter((file) => file.change !== "-").map((file) => file.path));
     const actual: string[] = []; let totalUncompressed = 0;
     for (const entry of Object.values(zip.files)) {
       const entryName = entry.dir ? entry.name.replace(/\/$/, "") : entry.name;
       if (entryName) assertManagedPath(entryName);
       if (entry.dir) continue;
-      if (++actual.length > MAX_FILES) throw new Error("Release archive has too many files.");
+      if (actual.length >= MAX_FILES) throw new Error("Release archive has too many files.");
       const path = assertManagedPath(entry.name);
       actual.push(path);
       const size = zipEntrySize(entry);
@@ -177,10 +208,10 @@ export class UpdateService {
     return { manifest, release, writes: actual, deletions: release.deletions };
   }
 
-  private async apply(plan: UpdatePlan, archive: ArrayBuffer, progress: (message: string) => void): Promise<void> {
+  private async apply(plan: UpdatePlan, archive: ArrayBuffer, progress: (message: string) => void, confirmOverwrite: ConfirmOverwrite): Promise<void> {
     const adapter = this.app.vault.adapter;
     const previous = this.getData().installed;
-    const owned = new Set(previous.ownedFiles);
+    const owned = currentOwnedPaths(previous);
     // Each release is incremental: only explicit deletions are removed. Earlier
     // releases remain installed after their ZIP has committed successfully.
     const deletions = [...new Set(plan.deletions)];
@@ -188,7 +219,10 @@ export class UpdateService {
       await assertNoReparsePoints(this.app, path);
       if (await adapter.exists(path)) {
         if ((await adapter.stat(path))?.type === "folder") throw new Error(`Refusing to replace a local folder: ${path}`);
-        if (!owned.has(path)) throw new Error(`Refusing to overwrite unmanaged local file: ${path}`);
+        if (!owned.has(path)) {
+          progress(`Waiting for overwrite approval: ${path}`);
+          if (await confirmOverwrite(path) === "cancel") throw new Error("Update cancelled. No files in this release were changed; earlier completed releases remain installed.");
+        }
       }
     }
     for (const path of deletions) {
@@ -218,14 +252,12 @@ export class UpdateService {
         if (!entry) throw new Error(`Archive entry disappeared: ${path}`);
         await writeBinary(adapter, path, await entry.async("uint8array"));
       }
-      const nextOwned = new Set(previous.ownedFiles);
-      for (const path of deletions) nextOwned.delete(path);
-      for (const path of plan.writes) nextOwned.add(path);
-      await this.saveData({ installed: {
+      const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.map((file) => ({ ...file })) };
+      await this.saveData({ ...this.getData(), installed: {
         releaseVersion: plan.release.releaseVersion,
         releaseId: plan.release.releaseId,
         appliedReleaseIds: [...new Set([...(previous.appliedReleaseIds ?? []), plan.release.releaseId])],
-        ownedFiles: [...nextOwned].sort(),
+        ownedFiles: nextOwned,
       } });
       await removeTree(adapter, transactionDir);
     } catch (error) {

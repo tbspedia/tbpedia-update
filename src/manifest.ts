@@ -17,7 +17,15 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   if (!Array.isArray(input.managedRoots) || !sameSet(input.managedRoots, [...MANAGED_ROOTS])) throw new Error("managedRoots does not match the approved boundary.");
   if (!Array.isArray(input.releases) || input.releases.length === 0) throw new Error("releases must be a non-empty array.");
 
-  const releases = input.releases.map((entry) => parseRelease(entry, releaseKey));
+  const existingPaths = new Set<string>();
+  const releases = input.releases.map((entry) => {
+    const release = parseRelease(entry, releaseKey, existingPaths);
+    for (const file of release.files) {
+      if (file.change === "-") existingPaths.delete(file.path);
+      else existingPaths.add(file.path);
+    }
+    return release;
+  });
   const ids = new Set<string>();
   for (let index = 0; index < releases.length; index += 1) {
     const release = releases[index];
@@ -28,7 +36,7 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   return { ...input, releases } as ReleaseManifest;
 }
 
-function parseRelease(input: unknown, expectedKey: string): ReleaseEntry {
+function parseRelease(input: unknown, expectedKey: string, existingPaths: Set<string>): ReleaseEntry {
   if (!isRecord(input)) throw new Error("Each release must be an object.");
   for (const field of ["releaseVersion", "releaseId", "publishedAt", "filename"] as const) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Release field ${field} is invalid.`);
   const version = parseReleaseVersion(input.releaseVersion);
@@ -40,16 +48,24 @@ function parseRelease(input: unknown, expectedKey: string): ReleaseEntry {
   if (!Array.isArray(input.files) || !Array.isArray(input.deletions)) throw new Error("files and deletions must be arrays.");
   const files = input.files.map((entry) => {
     if (!isRecord(entry) || typeof entry.path !== "string") throw new Error("Each file entry needs a path.");
-    return { path: assertManagedPath(entry.path) };
+    const path = assertManagedPath(entry.path);
+    const change = entry.change ?? (existingPaths.has(path) ? "~" : "+");
+    if (change !== "+" && change !== "-" && change !== "~") throw new Error("File change must be +, -, or ~.");
+    return { path, change };
   });
   const deletions = input.deletions.map((path) => {
     if (typeof path !== "string") throw new Error("Each deletion must be a path.");
     return assertManagedPath(path);
   });
-  const allPaths = [...files.map((file) => file.path), ...deletions];
+  for (const path of deletions) {
+    const file = files.find((entry) => entry.path === path);
+    if (file && file.change !== "-") throw new Error("A deletion conflicts with a file write.");
+    if (!file) files.push({ path, change: "-" });
+  }
+  const allPaths = files.map((file) => file.path);
   if (new Set(allPaths).size !== allPaths.length) throw new Error(`Release ${input.releaseId} contains duplicate or conflicting paths.`);
   if (!isRecord(input.releaseNotes) || typeof input.releaseNotes.summary !== "string" || !["added", "updated", "removed"].every((key) => typeof input.releaseNotes[key] === "number" && input.releaseNotes[key] >= 0)) throw new Error("releaseNotes is invalid.");
-  return { releaseVersion: input.releaseVersion, releaseId: input.releaseId, publishedAt: input.publishedAt, filename: input.filename, files, deletions, releaseNotes: input.releaseNotes as ReleaseEntry["releaseNotes"] };
+  return { releaseVersion: input.releaseVersion, releaseId: input.releaseId, publishedAt: input.publishedAt, filename: input.filename, files, deletions: files.filter((file) => file.change === "-").map((file) => file.path), releaseNotes: input.releaseNotes as ReleaseEntry["releaseNotes"] };
 }
 
 export function compareVersions(a: string, b: string): number {

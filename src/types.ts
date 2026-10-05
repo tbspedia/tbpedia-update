@@ -11,12 +11,14 @@ export const MANAGED_ROOTS = [
   "98 下載資料", "99 Setting"
 ] as const;
 
+export interface FileChange { path: string; change: "+" | "-" | "~"; }
+
 export interface ReleaseEntry {
   releaseVersion: string;
   releaseId: string;
   publishedAt: string;
   filename: string;
-  files: Array<{ path: string }>;
+  files: FileChange[];
   deletions: string[];
   releaseNotes: { summary: string; added: number; updated: number; removed: number };
 }
@@ -42,11 +44,13 @@ export interface InstalledState {
   releaseVersion?: string;
   releaseId?: string;
   appliedReleaseIds: string[];
-  ownedFiles: string[];
+  ownedFiles: Record<string, FileChange[]>;
 }
 
 export interface PluginData {
   languageCode?: SupportedLanguage;
+  seriesId: string;
+  editionId: string;
   installed: InstalledState;
 }
 

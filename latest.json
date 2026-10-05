@@ -6,6 +6,12 @@
     {
       "language": "zh-TW",
       "path": "manifests/zh-tw/latest.json"
+    },
+    {
+      "language": "zh-TW",
+      "series": "reading",
+      "edition": "advanced",
+      "path": "manifests/zh-tw/advanced/latest.json"
     }
   ]
 }

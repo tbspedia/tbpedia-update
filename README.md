@@ -20,9 +20,9 @@ pnpm run check
 pnpm run build
 ```
 
-Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, enable **Tbpedia Update**, then select the vault language in plugin settings. For example, a Traditional Chinese vault retrieves `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests/zh-tw/latest.json`.
+Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, enable **Tbpedia Update**, then select the vault language and edition in plugin settings. Standard uses `manifests/<language>/latest.json`; Advanced uses `manifests/<language>/advanced/latest.json`. For example, a Traditional Chinese vault retrieves `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests/zh-tw/latest.json`.
 
-The plugin stores that selection in `.obsidian/plugins/tbpedia-update/data.json`. Existing vaults must select the language once; a fresh install without a language selected deliberately does not fetch a manifest.
+The plugin stores that selection in `.obsidian/plugins/tbpedia-update/data.json`, with `seriesId` and `editionId` immediately after `languageCode`, followed by `installed`. These IDs default to `reading` and `standard`. The edition dropdown offers `standard` and `advanced`; update checks validate the manifest against the selected language, series, and edition. Switching editions preserves installed release records and checks applied release IDs independently of release dates in other editions. Existing saved data receives the fields when the plugin loads. Existing vaults must select the language once; a fresh install without a language selected deliberately does not fetch a manifest.
 
 The plugin validates the collection tuple, exact approved managed roots, release compatibility, every archive path, archive/expanded-size limits, collisions, and the exact manifest file inventory. It creates a vault-local staging and backup transaction, refuses to overwrite unowned files, and restores backed-up files if applying the release fails.
 
@@ -45,7 +45,7 @@ The root index is intentionally small:
 }
 ```
 
-Add a language to this index only after its language manifest is published and validated. The plugin directly requests its configured language path; it does not use the index during normal updates.
+Add a language to this index only after its language manifest is published and validated. The plugin directly requests its configured language and edition path; it does not use the index during normal updates.
 
 For example, a vault recorded at `zh-tw-reading-standard-2026.9.30` receives the `zh-tw-reading-standard-2026.10.1` ZIP first and then the `zh-tw-reading-standard-2026.11.1` ZIP. Each release is downloaded, validated, backed up, committed, audited, and persisted separately. If the second release fails, the vault remains correctly installed through `zh-tw-reading-standard-2026.10.1`; the next run resumes with `zh-tw-reading-standard-2026.11.1`. Existing vaults with legacy date-only version records remain comparable during this transition.
 
@@ -65,8 +65,8 @@ For example, a vault recorded at `zh-tw-reading-standard-2026.9.30` receives the
   "minimumObsidianVersion": "1.6.0",
   "managedRoots": ["00 說明", "01 文集部", "02 開示部", "03 經藏部", "04 頌與戒律", "05 傳法部", "06 密法儀軌", "07 佛語典藏", "08 其他類別", "09 蓮香上師", "10 真佛宗", "20 專題", "50 列表", "60 導讀", "70 背景資料", "90 幫助", "98 下載資料", "99 Setting"],
   "releases": [
-    { "releaseVersion": "zh-tw-reading-standard-2026.10.1", "releaseId": "zh-tw-reading-standard-2026-10-1.1", "publishedAt": "2026-10-01T08:00:00Z", "filename": "zh-tw-reading-standard-2026-10-1.1.zip", "files": [{ "path": "01 文集部/new-note.md" }], "deletions": [], "releaseNotes": { "summary": "October additions", "added": 1, "updated": 0, "removed": 0 } },
-    { "releaseVersion": "zh-tw-reading-standard-2026.11.1", "releaseId": "zh-tw-reading-standard-2026-11-1.1", "publishedAt": "2026-11-01T08:00:00Z", "filename": "zh-tw-reading-standard-2026-11-1.1.zip", "files": [{ "path": "01 文集部/another-note.md" }], "deletions": [], "releaseNotes": { "summary": "November additions", "added": 1, "updated": 0, "removed": 0 } }
+    { "releaseVersion": "zh-tw-reading-standard-2026.10.1", "releaseId": "zh-tw-reading-standard-2026-10-1.1", "publishedAt": "2026-10-01T08:00:00Z", "filename": "zh-tw-reading-standard-2026-10-1.1.zip", "files": [{ "path": "01 文集部/new-note.md", "change": "+" }], "deletions": [], "releaseNotes": { "summary": "October additions", "added": 1, "updated": 0, "removed": 0 } },
+    { "releaseVersion": "zh-tw-reading-standard-2026.11.1", "releaseId": "zh-tw-reading-standard-2026-11-1.1", "publishedAt": "2026-11-01T08:00:00Z", "filename": "zh-tw-reading-standard-2026-11-1.1.zip", "files": [{ "path": "01 文集部/another-note.md", "change": "+" }], "deletions": [], "releaseNotes": { "summary": "November additions", "added": 1, "updated": 0, "removed": 0 } }
   ]
 }
 ```
@@ -103,3 +103,5 @@ The Worker offers opaque source discovery, bounded source probes, package stream
 Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Build the readable release key from the manifest collection identity: `<language>-<series>-<edition>` in lowercase. Use `releaseVersion` as `<release-key>-YYYY.M.D` and `releaseId` as `<release-key>-YYYY-M-D.sequence`; for example, `zh-tw-reading-standard-2026-10-1.2` is the second 1 October release. The key in both fields must match the manifest’s `language.code`, `series.id`, and `edition.id`. Append the release to that language’s `manifests/<language>/latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
 
 When adding a new language, create and validate `manifests/<lowercase-language>/latest.json`, add its path to root `latest.json`, create the corresponding enabled `Updateinfo` rows, and then choose that language in a test vault’s plugin settings.
+
+Installed state stores ownedFiles as an object keyed by release ID, containing historical file change records matching the manifest: { "path": "01 文集部/note.md", "change": "+" }. The change field follows path: + means added, ~ means modified, and - means deleted. Deleted entries are excluded from ZIP inventories and remain in release history. Current ownership is computed by replaying applied releases. The legacy deletions array is still supported; matching - entries may also appear in files. Legacy entries without indicators are inferred from manifest history; unmatched saved paths retain provisional + indicators in a legacy group.

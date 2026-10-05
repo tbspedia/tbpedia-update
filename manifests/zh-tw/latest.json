@@ -31,14 +31,19 @@
       "filename": "zh-tw-reading-standard-2026-10-1.1.zip",
       "files": [
         {
-          "path": "01 文集部/測試更新-2026-10-1.md"
+          "path": "01 文集部/測試更新-2026-10-1.md",
+          "change": "+"
+        },
+        {
+          "path": "01 文集部/測試更新-2026-10-2.md",
+          "change": "~"
         }
       ],
       "deletions": [],
       "releaseNotes": {
         "summary": "測試：2026 年 10 月第 1 次增量更新。",
         "added": 1,
-        "updated": 0,
+        "updated": 1,
         "removed": 0
       }
     },
@@ -49,7 +54,8 @@
       "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
       "files": [
         {
-          "path": "01 文集部/測試更新-2026-11-1.md"
+          "path": "01 文集部/測試更新-2026-11-1.md",
+          "change": "+"
         }
       ],
       "deletions": [],
