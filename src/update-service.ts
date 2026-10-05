@@ -25,7 +25,7 @@ export class UpdateService {
     const language = this.getData().languageCode;
     if (!language) throw new Error("Choose this vault’s Tbpedia language in the plugin settings first.");
     const edition = this.getData().editionId;
-    const manifest = await this.fetchManifest(language, edition);
+    const manifest = await this.fetchManifest(language, this.getData().seriesId, edition);
     this.assertSelectedCollection(manifest);
     this.assertCompatible(manifest);
     const data = this.getData();
@@ -108,10 +108,11 @@ export class UpdateService {
     return manifest.releases.filter((release) => compareReleaseVersions(release.releaseVersion, installed.releaseVersion!) > 0);
   }
 
-  private async fetchManifest(language: SupportedLanguage, edition: string): Promise<ReleaseManifest> {
+  private async fetchManifest(language: SupportedLanguage, series: string, edition: string): Promise<ReleaseManifest> {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(series)) throw new Error("The configured Tbpedia series ID is invalid.");
     if (edition !== "standard" && edition !== "advanced") throw new Error("Choose a supported Tbpedia edition in the plugin settings.");
     const editionPath = edition === "advanced" ? "/advanced" : "";
-    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}${editionPath}/latest.json`, method: "GET", throw: false });
+    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}${editionPath}/latest.json`, method: "GET", throw: false });
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
     try { json = response.json; } catch { throw new Error("Release metadata is not valid JSON."); }

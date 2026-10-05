@@ -5,13 +5,15 @@
   "manifests": [
     {
       "language": "zh-TW",
-      "path": "manifests/zh-tw/latest.json"
+      "series": "reading",
+      "edition": "standard",
+      "path": "manifests/zh-tw/reading/latest.json"
     },
     {
       "language": "zh-TW",
       "series": "reading",
       "edition": "advanced",
-      "path": "manifests/zh-tw/advanced/latest.json"
+      "path": "manifests/zh-tw/reading/advanced/latest.json"
     }
   ]
 }
