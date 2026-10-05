@@ -7,7 +7,7 @@ An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbp
 - `src/` — Obsidian plugin source. `main.js` is the built plugin bundle and `manifest.json` is the Obsidian plugin manifest.
 - `worker/` — Cloudflare Worker source and Wrangler configuration.
 - `latest.json` — public index of published language manifests; it is not a release manifest itself.
-- `manifests/<language>/<series>/latest.json` — immutable incremental-release history for one language and series (standard edition).
+- `manifests/<language>/<series>/<edition>/latest.json` — immutable incremental-release history for one language, series, and edition.
 - `latest-manifest-template.xlsx` — authoring template for a public language release manifest; do not put mirror URLs, hashes, signatures, or credentials into it.
 
 ## Build the plugin
@@ -20,7 +20,7 @@ pnpm run check
 pnpm run build
 ```
 
-Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, enable **Tbpedia Update**, then select the vault language and edition in plugin settings. Standard uses `manifests/<language>/<series>/latest.json`; Advanced uses `manifests/<language>/<series>/advanced/latest.json`. For example, a Traditional Chinese vault retrieves `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests/zh-tw/reading/latest.json`.
+Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, enable **Tbpedia Update**, then select the vault language and edition in plugin settings. Standard uses `manifests/<language>/<series>/standard/latest.json`; Advanced uses `manifests/<language>/<series>/advanced/latest.json`. For example, a Traditional Chinese vault retrieves `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests/zh-tw/reading/standard/latest.json`.
 
 The plugin stores that selection in `.obsidian/plugins/tbpedia-update/data.json`, with `seriesId` and `editionId` immediately after `languageCode`, followed by `installed`. These IDs default to `reading` and `standard`. The edition dropdown offers `standard` and `advanced`; update checks validate the manifest against the selected language, series, and edition. Switching editions preserves installed release records and checks applied release IDs independently of release dates in other editions. Existing saved data receives the fields when the plugin loads. Existing vaults must select the language once; a fresh install without a language selected deliberately does not fetch a manifest.
 
@@ -28,9 +28,9 @@ The plugin validates the collection tuple, exact approved managed roots, release
 
 ## Incremental release history
 
-Each language has its own `manifests/<language>/<series>/latest.json`, using `schemaVersion: 2` and retaining an ordered `releases` array. The root `latest.json` is only a small public manifest index. Each release entry has its own ZIP, source rows in NocoDB, exact `files` inventory, explicit `deletions`, and release notes. A ZIP contains only that release's new or changed managed Markdown files; it is not a full vault snapshot.
+Each language has its own `manifests/<language>/<series>/<edition>/latest.json`, using `schemaVersion: 2` and retaining an ordered `releases` array. The root `latest.json` is only a small public manifest index. Each release entry has its own ZIP, source rows in NocoDB, exact `files` inventory, explicit `deletions`, and release notes. A ZIP contains only that release's new or changed managed Markdown files; it is not a full vault snapshot.
 
-Supported vault language codes are `en`, `ja`, `fr`, `es`, `de`, `nl`, `sv`, `ko`, `zh-TW`, `zh-CN`, `vi`, `id`, `th`, and `bo`. Directory names are always lowercase, so `zh-TW` uses `manifests/zh-tw/reading/latest.json` and `zh-CN` uses `manifests/zh-cn/reading/latest.json`.
+Supported vault language codes are `en`, `ja`, `fr`, `es`, `de`, `nl`, `sv`, `ko`, `zh-TW`, `zh-CN`, `vi`, `id`, `th`, and `bo`. Directory names are always lowercase, so `zh-TW` uses `manifests/zh-tw/reading/standard/latest.json` and `zh-CN` uses `manifests/zh-cn/reading/standard/latest.json`.
 
 The root index is intentionally small:
 
@@ -40,7 +40,7 @@ The root index is intentionally small:
   "product": "Tbpedia-Distribute",
   "type": "manifest-index",
   "manifests": [
-    { "language": "zh-TW", "path": "manifests/zh-tw/reading/latest.json" }
+    { "language": "zh-TW", "path": "manifests/zh-tw/reading/standard/latest.json" }
   ]
 }
 ```
@@ -100,8 +100,8 @@ The Worker offers opaque source discovery, bounded source probes, package stream
 
 `Updateinfo` needs the design-spec fields, especially `Language`, `Series`, `Edition`, `Title`, `Version`, `Filename`, `UpdateSource`, `UpdateLink`, `SourceId`, `Enabled`, `Priority`, `Regions`, and `SupportsRange`. `SourceId` must be unique and URL-safe (`A–Z`, `a–z`, `0–9`, `_`, `-`). The `Update` audit table uses the fields defined in the specification; the Worker records `initiated`, then `success` or `failed`.
 
-Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Build the readable release key from the manifest collection identity: `<language>-<series>-<edition>` in lowercase. Use `releaseVersion` as `<release-key>-YYYY.M.D` and `releaseId` as `<release-key>-YYYY-M-D.sequence`; for example, `zh-tw-reading-standard-2026-10-1.2` is the second 1 October release. The key in both fields must match the manifest’s `language.code`, `series.id`, and `edition.id`. Append the release to that language’s `manifests/<language>/<series>/latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
+Before publishing a release, upload its incremental ZIP and enable its matching private `Updateinfo` rows first. Build the readable release key from the manifest collection identity: `<language>-<series>-<edition>` in lowercase. Use `releaseVersion` as `<release-key>-YYYY.M.D` and `releaseId` as `<release-key>-YYYY-M-D.sequence`; for example, `zh-tw-reading-standard-2026-10-1.2` is the second 1 October release. The key in both fields must match the manifest’s `language.code`, `series.id`, and `edition.id`. Append the release to that language’s `manifests/<language>/<series>/<edition>/latest.json`; never alter or reorder a published entry. Publish the manifest only after a canary update succeeds.
 
-When adding a new language, create and validate `manifests/<lowercase-language>/<series>/latest.json`, add its path to root `latest.json`, create the corresponding enabled `Updateinfo` rows, and then choose that language in a test vault’s plugin settings.
+When adding a new language, create and validate `manifests/<lowercase-language>/<series>/<edition>/latest.json`, add its path to root `latest.json`, create the corresponding enabled `Updateinfo` rows, and then choose that language in a test vault’s plugin settings.
 
 Installed state stores ownedFiles as an object keyed by release ID, containing historical file change records matching the manifest: { "path": "01 文集部/note.md", "change": "+" }. The change field follows path: + means added, ~ means modified, and - means deleted. Deleted entries are excluded from ZIP inventories and remain in release history. Current ownership is computed by replaying applied releases. The legacy deletions array is still supported; matching - entries may also appear in files. Legacy entries without indicators are inferred from manifest history; unmatched saved paths retain provisional + indicators in a legacy group.

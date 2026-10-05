@@ -111,8 +111,7 @@ export class UpdateService {
   private async fetchManifest(language: SupportedLanguage, series: string, edition: string): Promise<ReleaseManifest> {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(series)) throw new Error("The configured Tbpedia series ID is invalid.");
     if (edition !== "standard" && edition !== "advanced") throw new Error("Choose a supported Tbpedia edition in the plugin settings.");
-    const editionPath = edition === "advanced" ? "/advanced" : "";
-    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}${editionPath}/latest.json`, method: "GET", throw: false });
+    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}/${edition}/latest.json`, method: "GET", throw: false });
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
     try { json = response.json; } catch { throw new Error("Release metadata is not valid JSON."); }
