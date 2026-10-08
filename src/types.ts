@@ -18,6 +18,7 @@ export interface ReleaseEntry {
   releaseId: string;
   publishedAt: string;
   filename: string;
+  dependsOn?: string[];
   files: FileChange[];
   deletions: string[];
   releaseNotes: { summary: string; added: number; updated: number; removed: number };
@@ -42,6 +43,7 @@ export interface ReleaseManifest {
 }
 
 export interface InstalledState {
+  trackingVersion?: 2;
   releaseVersion?: string;
   releaseId?: string;
   appliedReleaseIds: string[];
@@ -49,11 +51,15 @@ export interface InstalledState {
 }
 
 export interface PluginData {
+  checkForUpdatesOnStartup: boolean;
   languageCode?: SupportedLanguage;
+  interfaceLanguage?: SupportedLanguage;
+  notifiedReleaseIds?: string[];
   seriesId: string;
   editionId: string;
   Collection: string;
   installed: InstalledState;
+  baseRelease?: { releaseVersion?: string; releaseId?: string };
 }
 
 export interface Source {

@@ -13,8 +13,6 @@ binding = "CONFIG"
 id = "c2eb669330e64a71927127a083c16826"
 
 [vars]
-# Comma-separated hostnames, never URLs. Keep this list aligned with approved mirrors.
-UPSTREAM_ALLOWLIST = "download.tbpedia.org,www.tbpedia.org,drive.google.com,onedrive.live.com"
 # Comma-separated browser origins allowed by the Worker. Obsidian desktop requests may have no Origin.
 CORS_ORIGINS = "app://obsidian.md,obsidian://app"
 

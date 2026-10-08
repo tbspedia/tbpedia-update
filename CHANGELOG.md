@@ -2,6 +2,20 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## Unreleased
+
+- Allow explicit release deletions to remove existing Markdown files inside approved collection folders even when they are missing from `installed.ownedFiles`, including base collection files and locally created notes whose paths are listed.
+- Keep ownership checks for other files, reject folder deletion, and preserve path/reparse-point checks and transaction rollback.
+- Add regression coverage for untracked collection deletion, protected files and folders, tracked-file deletion, and restoration after a failed update.
+
+## 1.2.0 — 2026-10-06
+
+- Added per-release `dependsOn`: an empty array allows independent installation; explicit IDs include required dependencies recursively. Omitted fields preserve sequential installation.
+- Added release selection in settings and persistent one-time announcements with Go to download and Acknowledge actions.
+- Track completed releases individually so independent installations do not hide skipped releases. Preserve legacy installation history on migration.
+- Added startup update checking, enabled by default, and separated Interface language from collection language.
+- Improved archive mismatch diagnostics and removed the Vault edition dropdown.
+
 ## 1.1.0 — 2026-10-04
 
 ### Added

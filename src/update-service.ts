@@ -3,7 +3,7 @@ import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
 import { compareReleaseVersions, compareVersions, parseAndValidateManifest } from "./manifest";
 import { assertManagedPath, ensureNoPathConflicts } from "./path-policy";
 import { currentOwnedPaths, migrateOwnedFiles } from "./ownership";
-import { MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
+import { MANAGED_ROOTS, MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
 
 const STAGING_DIR = ".obsidian/plugins/tbpedia-update/.staging";
 const MAX_ARCHIVE_BYTES = 1024 * 1024 * 1024;
@@ -22,11 +22,7 @@ export class UpdateService {
   ) {}
 
   async check(): Promise<UpdateBatch | null> {
-    const language = this.getData().languageCode;
-    if (!language) throw new Error("Choose this vault’s Tbpedia language in the plugin settings first.");
-    const edition = this.getData().editionId;
-    const manifest = await this.fetchManifest(language, this.getData().seriesId, edition, this.getData().Collection);
-    this.assertSelectedCollection(manifest);
+    const manifest = await this.getReleaseManifest();
     this.assertCompatible(manifest);
     const data = this.getData();
     await this.saveData({ ...data, seriesId: manifest.collection.series.id, editionId: manifest.collection.edition.id,
@@ -35,9 +31,40 @@ export class UpdateService {
     return releases.length ? { manifest, releases } : null;
   }
 
+  async getReleaseManifest(): Promise<ReleaseManifest> {
+    const language = this.getData().languageCode;
+    if (!language) throw new Error("This vault’s Tbpedia collection language is missing. Configure languageCode in the plugin’s data.json first.");
+    const edition = this.getData().editionId;
+    const manifest = await this.fetchManifest(language, this.getData().seriesId, edition, this.getData().Collection);
+    this.assertSelectedCollection(manifest);
+    return manifest;
+  }
+
+  isReleaseInstalled(release: ReleaseEntry, manifest: ReleaseManifest): boolean {
+    return this.installedReleaseIds(manifest).has(release.releaseId);
+  }
+
+  getSelectedBatch(manifest: ReleaseManifest, selectedIds: Set<string>): UpdateBatch {
+    const installed = this.installedReleaseIds(manifest);
+    const included = new Set<string>();
+    const visit = (id: string): void => {
+      if (installed.has(id) || included.has(id)) return;
+      const index = manifest.releases.findIndex((release) => release.releaseId === id);
+      if (index < 0) throw new Error(`Unknown release dependency: ${id}.`);
+      const release = manifest.releases[index];
+      included.add(id);
+      for (const dependency of release.dependsOn ?? manifest.releases.slice(0, index).map((entry) => entry.releaseId)) visit(dependency);
+    };
+    for (const id of selectedIds) visit(id);
+    const releases = manifest.releases.filter((release) => included.has(release.releaseId));
+    if (!releases.length) throw new Error("Select at least one pending release.");
+    return { manifest, releases };
+  }
+
   async install(batch: UpdateBatch, progress: (message: string) => void, confirmOverwrite?: ConfirmOverwrite): Promise<void> {
     this.assertSelectedCollection(batch.manifest);
     this.assertCompatible(batch.manifest);
+    batch = this.getSelectedBatch(batch.manifest, new Set(batch.releases.map((release) => release.releaseId)));
     // Approval lasts only for this installation, including subsequent releases.
     let overwriteAll = false;
     const approveOverwrite: ConfirmOverwrite = async (path) => {
@@ -52,7 +79,7 @@ export class UpdateService {
       progress(`Release ${index + 1} of ${batch.releases.length}: ${release.releaseVersion}`);
       await this.installRelease(batch.manifest, release, progress, approveOverwrite);
     }
-    new Notice(`Tbpedia updated through ${batch.releases.at(-1)!.releaseVersion}.`);
+    new Notice(`Installed ${batch.releases.length} Tbpedia release(s).`);
   }
 
   private async installRelease(manifest: ReleaseManifest, release: ReleaseEntry, progress: (message: string) => void, confirmOverwrite: ConfirmOverwrite): Promise<void> {
@@ -97,15 +124,27 @@ export class UpdateService {
   }
 
   private missingReleases(manifest: ReleaseManifest): ReleaseEntry[] {
+    const installed = this.installedReleaseIds(manifest);
+    return manifest.releases.filter((release) => !installed.has(release.releaseId));
+  }
+
+  private installedReleaseIds(manifest: ReleaseManifest): Set<string> {
     const installed = this.getData().installed;
+    const ids = new Set(installed.appliedReleaseIds);
+    if (installed.releaseId) ids.add(installed.releaseId);
+    if (installed.trackingVersion === 2) return ids;
     const installedIndex = installed.releaseId ? manifest.releases.findIndex((release) => release.releaseId === installed.releaseId) : -1;
-    if (installedIndex >= 0) return manifest.releases.slice(installedIndex + 1);
-    if (!installed.releaseVersion) return manifest.releases;
+    if (installedIndex >= 0) {
+      for (const release of manifest.releases.slice(0, installedIndex + 1)) ids.add(release.releaseId);
+      return ids;
+    }
+    if (!installed.releaseVersion) return ids;
     const key = [manifest.collection.language.code, manifest.collection.series.id, manifest.collection.edition.id].join("-").toLowerCase();
     if (!installed.releaseVersion.startsWith(`${key}-`) && !/^\d{4}\./.test(installed.releaseVersion)) {
-      return manifest.releases.filter((release) => !installed.appliedReleaseIds.includes(release.releaseId));
+      return ids;
     }
-    return manifest.releases.filter((release) => compareReleaseVersions(release.releaseVersion, installed.releaseVersion!) > 0);
+    for (const release of manifest.releases) if (compareReleaseVersions(release.releaseVersion, installed.releaseVersion) <= 0) ids.add(release.releaseId);
+    return ids;
   }
 
   private async fetchManifest(language: SupportedLanguage, series: string, edition: string, collection: string): Promise<ReleaseManifest> {
@@ -205,13 +244,20 @@ export class UpdateService {
     }
     if (new Set(actual).size !== actual.length) throw new Error("Release archive contains colliding paths.");
     ensureNoPathConflicts(actual);
-    if (actual.length !== expected.size || actual.some((path) => !expected.has(path))) throw new Error("Release archive does not exactly match the manifest inventory.");
+    const actualPaths = new Set(actual);
+    const missing = [...expected].filter((path) => !actualPaths.has(path));
+    const unexpected = actual.filter((path) => !expected.has(path));
+    if (missing.length || unexpected.length) {
+      const describe = (paths: string[]): string => `${paths.slice(0, 5).join(", ")}${paths.length > 5 ? ` (and ${paths.length - 5} more)` : ""}`;
+      const details = [missing.length ? `Missing files: ${describe(missing)}.` : "", unexpected.length ? `Unexpected files: ${describe(unexpected)}.` : ""].filter(Boolean).join(" ");
+      throw new Error(`Release archive does not exactly match the manifest inventory for ${release.releaseId} (${release.filename}). ${details}`);
+    }
     return { manifest, release, writes: actual, deletions: release.deletions };
   }
 
   private async apply(plan: UpdatePlan, archive: ArrayBuffer, progress: (message: string) => void, confirmOverwrite: ConfirmOverwrite): Promise<void> {
     const adapter = this.app.vault.adapter;
-    const previous = this.getData().installed;
+    const previous = { ...this.getData().installed, appliedReleaseIds: [...this.installedReleaseIds(plan.manifest)] };
     const owned = currentOwnedPaths(previous);
     // Each release is incremental: only explicit deletions are removed. Earlier
     // releases remain installed after their ZIP has committed successfully.
@@ -228,7 +274,17 @@ export class UpdateService {
     }
     for (const path of deletions) {
       await assertNoReparsePoints(this.app, path);
-      if (!owned.has(path)) throw new Error(`Refusing to delete a file not owned by the prior release: ${path}`);
+      const managedPath = assertManagedPath(path);
+      const exists = await adapter.exists(managedPath);
+      if (exists && (await adapter.stat(managedPath))?.type === "folder") {
+        throw new Error(`Refusing to delete a local folder: ${managedPath}`);
+      }
+      // Explicit deletions also cover collection notes predating ownership tracking.
+      const isUntrackedCollectionNote = exists && managedPath.toLowerCase().endsWith(".md")
+        && (MANAGED_ROOTS as readonly string[]).includes(managedPath.split("/")[0]);
+      if (!owned.has(path) && !isUntrackedCollectionNote) {
+        throw new Error(`Refusing to delete a file not owned by the prior release: ${path}`);
+      }
     }
 
     const transactionDir = `${STAGING_DIR}/${crypto.randomUUID()}`;
@@ -255,6 +311,7 @@ export class UpdateService {
       }
       const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.map((file) => ({ ...file })) };
       await this.saveData({ ...this.getData(), installed: {
+        trackingVersion: 2,
         releaseVersion: plan.release.releaseVersion,
         releaseId: plan.release.releaseId,
         appliedReleaseIds: [...new Set([...(previous.appliedReleaseIds ?? []), plan.release.releaseId])],

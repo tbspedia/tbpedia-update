@@ -31,8 +31,14 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   for (let index = 0; index < releases.length; index += 1) {
     const release = releases[index];
     if (ids.has(release.releaseId)) throw new Error(`Duplicate releaseId: ${release.releaseId}.`);
+    for (const dependency of release.dependsOn ?? []) {
+      if (!ids.has(dependency)) throw new Error(`Release ${release.releaseId} depends on ${dependency}, which must be an earlier release in this manifest.`);
+    }
     ids.add(release.releaseId);
     if (index > 0 && compareRelease(releases[index - 1], release) >= 0) throw new Error("releases must be in strictly increasing version and publication order.");
+  }
+  if (releases.some((release) => release.dependsOn !== undefined) && compareVersions(input.minimumPluginVersion, "1.2.0") < 0) {
+    throw new Error("Manifests using dependsOn must require minimumPluginVersion 1.2.0 or newer.");
   }
   return { ...input, releases } as ReleaseManifest;
 }
@@ -47,6 +53,9 @@ function parseRelease(input: unknown, expectedKey: string, existingPaths: Set<st
   if (releaseId.year !== version.year || releaseId.month !== version.month || releaseId.day !== version.day) throw new Error("releaseId date must match releaseVersion.");
   if (Number.isNaN(Date.parse(input.publishedAt))) throw new Error("publishedAt must be ISO-8601.");
   if (!Array.isArray(input.files) || !Array.isArray(input.deletions)) throw new Error("files and deletions must be arrays.");
+  if (input.dependsOn !== undefined && (!Array.isArray(input.dependsOn) || input.dependsOn.some((id: unknown) => typeof id !== "string" || !id.trim()) || new Set(input.dependsOn).size !== input.dependsOn.length)) {
+    throw new Error(`Release ${input.releaseId} dependsOn must be an array of unique release IDs.`);
+  }
   const files = input.files.map((entry) => {
     if (!isRecord(entry) || typeof entry.path !== "string") throw new Error("Each file entry needs a path.");
     const path = assertManagedPath(entry.path);
@@ -66,7 +75,7 @@ function parseRelease(input: unknown, expectedKey: string, existingPaths: Set<st
   const allPaths = files.map((file) => file.path);
   if (new Set(allPaths).size !== allPaths.length) throw new Error(`Release ${input.releaseId} contains duplicate or conflicting paths.`);
   if (!isRecord(input.releaseNotes) || typeof input.releaseNotes.summary !== "string" || !["added", "updated", "removed"].every((key) => typeof input.releaseNotes[key] === "number" && input.releaseNotes[key] >= 0)) throw new Error("releaseNotes is invalid.");
-  return { releaseVersion: input.releaseVersion, releaseId: input.releaseId, publishedAt: input.publishedAt, filename: input.filename, files, deletions: files.filter((file) => file.change === "-").map((file) => file.path), releaseNotes: input.releaseNotes as ReleaseEntry["releaseNotes"] };
+  return { releaseVersion: input.releaseVersion, releaseId: input.releaseId, publishedAt: input.publishedAt, filename: input.filename, ...(input.dependsOn !== undefined ? { dependsOn: input.dependsOn } : {}), files, deletions: files.filter((file) => file.change === "-").map((file) => file.path), releaseNotes: input.releaseNotes as ReleaseEntry["releaseNotes"] };
 }
 
 export function compareVersions(a: string, b: string): number {

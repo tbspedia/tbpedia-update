@@ -2,7 +2,6 @@ interface Env {
   CONFIG: KVNamespace;
   NOCODB_BASE_URL: string;
   TRANSACTION_SECRET: string;
-  UPSTREAM_ALLOWLIST: string;
   CORS_ORIGINS?: string;
 }
 
@@ -27,6 +26,7 @@ interface SourceRow {
   Priority?: number | string;
   Regions?: string;
   SupportsRange?: boolean | number | string;
+  UpdateCount?: number | string;
 }
 
 const ZIP_CONTENT_TYPES = new Set(["application/zip", "application/x-zip-compressed", "application/octet-stream"]);
@@ -79,7 +79,7 @@ async function listSources(request: Request, env: Env): Promise<Response> {
   const params = Object.fromEntries(["language", "series", "edition", "version", "title", "filename"].map((key) => [key, url.searchParams.get(key) ?? ""]));
   if (!Object.values(params).every(isShortString)) throw new HttpError(400, "Invalid source query.");
   if (params.language !== claims.language || params.series !== claims.series || params.edition !== claims.edition || params.version !== claims.version || params.title !== claims.title || params.filename !== claims.filename) throw new HttpError(403, "Source query does not match the transaction.");
-  const rows = await findSources(env, params);
+  const rows = await findSources(env, params.filename);
   const sources = rows.filter(isEnabled).map((row) => ({
     sourceId: opaqueSourceId(row), name: safeName(row.UpdateSource) ?? "Update source", region: safeName(row.Regions), priority: boundedInteger(row.Priority, 0, 1000), supportsRange: asBoolean(row.SupportsRange)
   }));
@@ -93,9 +93,11 @@ async function probeSource(request: Request, env: Env, sourceId: string): Promis
   try {
     const upstream = await fetchApproved(source.UpdateLink!, env, { headers: { Range: `bytes=0-${MAX_PROBE_BYTES - 1}` } });
     const contentType = upstream.headers.get("content-type")?.split(";", 1)[0].toLowerCase();
-    if (!upstream.ok || (contentType && !ZIP_CONTENT_TYPES.has(contentType)) || !upstream.body) throw new HttpError(502, "Source probe rejected.");
-    const bytes = new Uint8Array(await upstream.arrayBuffer());
-    if (bytes.byteLength === 0 || bytes.byteLength > MAX_PROBE_BYTES || bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new HttpError(502, "Source probe rejected.");
+    if (!upstream.ok) throw new HttpError(502, `Source probe rejected (HTTP ${upstream.status}).`);
+    if (contentType && !ZIP_CONTENT_TYPES.has(contentType)) throw new HttpError(502, `Source probe rejected (content type ${contentType}).`);
+    if (!upstream.body) throw new HttpError(502, "Source probe rejected (empty response body).");
+    const bytes = await readProbeBytes(upstream.body);
+    if (bytes.byteLength < 2 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new HttpError(502, "Source probe rejected (response does not begin with a ZIP header).");
     return json({ sourceId, healthy: true, latencyMs: Math.round(performance.now() - started), bytes: bytes.byteLength });
   } catch (error) {
     console.log(JSON.stringify({ sourceId, probe: "failed", error: safeError(error) }));
@@ -108,7 +110,18 @@ async function streamPackage(request: Request, env: Env): Promise<Response> {
   const body = await readJson(request);
   if (!isShortString(body.sourceId) || !isShortString(body.filename)) throw new HttpError(400, "Invalid package request.");
   const source = await sourceById(env, body.sourceId, claims);
-  await patchAudit(env, claims.auditId, { UpdateSource: safeName(source.UpdateSource) ?? "selected source" });
+  try {
+    await incrementSourceCount(env, source);
+  } catch (error) {
+    console.log(JSON.stringify({ transactionId: claims.id, sourceId: body.sourceId, audit: "source-count-update-failed", error: safeError(error) }));
+  }
+  // Audit availability must not prevent a verified source from serving a
+  // package. The final success/failure report remains best-effort as well.
+  try {
+    await patchAudit(env, claims.auditId, { UpdateSource: safeName(source.UpdateSource) ?? "selected source" });
+  } catch (error) {
+    console.log(JSON.stringify({ transactionId: claims.id, audit: "source-update-failed", error: safeError(error) }));
+  }
   const upstream = await fetchApproved(source.UpdateLink!, env);
   const contentType = upstream.headers.get("content-type")?.split(";", 1)[0].toLowerCase();
   if (!upstream.ok || !upstream.body || (contentType && !ZIP_CONTENT_TYPES.has(contentType))) throw new HttpError(502, "Selected source did not return a ZIP package.");
@@ -129,35 +142,48 @@ async function reportResult(request: Request, env: Env, transactionId: string): 
   return json({ ok: true });
 }
 
-async function findSources(env: Env, query: Record<string, string>): Promise<SourceRow[]> {
+async function findSources(env: Env, filename: string): Promise<SourceRow[]> {
   const tableId = await config(env, "nocodbtableid_Updateinfo");
-  const clauses = [["Language", query.language], ["Series", query.series], ["Edition", query.edition], ["Title", query.title], ["Version", query.version], ["Filename", query.filename]]
-    .map(([field, value]) => `(${field},eq,${escapeWhere(value)})`).join("~and");
+  // The package filename is the release's stable source key. Keep the database
+  // lookup independent of descriptive collection metadata, which may be edited
+  // in NocoDB without changing the published package.
+  const clauses = `(Filename,eq,${escapeWhere(filename)})`;
   const result = await nocodb(env, `/api/v2/tables/${encodeURIComponent(tableId)}/records?where=${encodeURIComponent(clauses)}&limit=100`);
   return Array.isArray(result.list) ? result.list as SourceRow[] : [];
 }
 
 async function sourceById(env: Env, sourceId: string, claims: TransactionClaims): Promise<SourceRow> {
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(sourceId)) throw new HttpError(400, "Invalid source id.");
-  const tableId = await config(env, "nocodbtableid_Updateinfo");
-  const clauses = [["SourceId", sourceId], ["Language", claims.language], ["Series", claims.series], ["Edition", claims.edition], ["Title", claims.title], ["Version", claims.version], ["Filename", claims.filename]]
-    .map(([field, value]) => `(${field},eq,${escapeWhere(value)})`).join("~and");
-  const result = await nocodb(env, `/api/v2/tables/${encodeURIComponent(tableId)}/records?where=${encodeURIComponent(clauses)}&limit=2`);
-  const rows = Array.isArray(result.list) ? result.list as SourceRow[] : [];
+  const rows = (await findSources(env, claims.filename)).filter((row) => row.SourceId === sourceId);
   if (rows.length !== 1 || !isEnabled(rows[0]) || !isShortString(rows[0].UpdateLink)) throw new HttpError(404, "Update source is unavailable.");
   return rows[0];
+}
+
+async function incrementSourceCount(env: Env, source: SourceRow): Promise<void> {
+  const id = source.Id ?? source.id;
+  if (typeof id !== "string" && typeof id !== "number") throw new HttpError(502, "Update source record is missing its id.");
+  const current = typeof source.UpdateCount === "number" ? source.UpdateCount : Number(source.UpdateCount ?? 0);
+  const next = Number.isFinite(current) && current >= 0 ? Math.floor(current) + 1 : 1;
+  const tableId = await config(env, "nocodbtableid_Updateinfo");
+  await patchRecord(env, tableId, id, { UpdateCount: next });
 }
 
 async function createAudit(env: Env, fields: Record<string, unknown>): Promise<string | number> {
   const tableId = await config(env, "nocodbtableid_Update");
   const result = await nocodb(env, `/api/v2/tables/${encodeURIComponent(tableId)}/records`, { method: "POST", body: JSON.stringify(fields) });
-  const id = result.Id ?? result.id;
+  const record = Array.isArray(result) ? result[0] : result;
+  const id = record?.Id ?? record?.id ?? record?.ID;
   if (typeof id !== "string" && typeof id !== "number") throw new HttpError(502, "Audit record could not be created.");
   return id;
 }
 async function patchAudit(env: Env, id: string | number, fields: Record<string, unknown>): Promise<void> {
   const tableId = await config(env, "nocodbtableid_Update");
-  await nocodb(env, `/api/v2/tables/${encodeURIComponent(tableId)}/records/${encodeURIComponent(String(id))}`, { method: "PATCH", body: JSON.stringify(fields) });
+  await patchRecord(env, tableId, id, fields);
+}
+async function patchRecord(env: Env, tableId: string, id: string | number, fields: Record<string, unknown>): Promise<void> {
+  const numericId = Number(id);
+  const recordId = Number.isSafeInteger(numericId) && String(numericId) === String(id) ? numericId : id;
+  await nocodb(env, `/api/v2/tables/${encodeURIComponent(tableId)}/records`, { method: "PATCH", body: JSON.stringify({ Id: recordId, ...fields }) });
 }
 async function nocodb(env: Env, path: string, init: RequestInit = {}): Promise<Record<string, any>> {
   const token = await config(env, "nocodbapitoken");
@@ -170,10 +196,51 @@ async function config(env: Env, key: string): Promise<string> { const value = aw
 async function fetchApproved(link: string, env: Env, init: RequestInit = {}): Promise<Response> {
   let url: URL;
   try { url = new URL(link); } catch { throw new HttpError(502, "Source URL is invalid."); }
-  const allowed = env.UPSTREAM_ALLOWLIST.split(",").map((host) => host.trim().toLowerCase()).filter(Boolean);
-  if (url.protocol !== "https:" || !allowed.includes(url.hostname.toLowerCase())) throw new HttpError(502, "Source is not approved.");
+  if (url.protocol !== "https:") throw new HttpError(502, "Source URL must use HTTPS.");
+  const hostname = url.hostname.toLowerCase();
+  if (hostname === "drive.google.com" || hostname === "docs.google.com") {
+    const fileId = url.pathname.match(/\/file\/d\/([^/]+)/)?.[1] || url.searchParams.get("id");
+    if (!fileId) throw new HttpError(502, "Google Drive link is missing its file id.");
+    url = new URL(`https://drive.usercontent.google.com/download?id=${encodeURIComponent(fileId)}&export=download&confirm=t`);
+  }
+  const microsoftShare = hostname === "1drv.ms" || hostname === "onedrive.live.com" || hostname.endsWith(".sharepoint.com");
+  if (microsoftShare) {
+    if (hostname === "onedrive.live.com" && url.pathname.toLowerCase() === "/embed") url.pathname = "/download";
+    url.searchParams.delete("web");
+    url.searchParams.set("download", "1");
+  }
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
-  try { return await fetch(url, { ...init, redirect: "manual", signal: controller.signal }); }
+  try {
+    const cookieHost = url.hostname.toLowerCase();
+    const cookies = new Map<string, string>();
+    for (let hop = 0; hop < 6; hop++) {
+      const headers = new Headers(init.headers);
+      if (microsoftShare && url.hostname.toLowerCase() === cookieHost && cookies.size) {
+        headers.set("Cookie", [...cookies].map(([name, value]) => `${name}=${value}`).join("; "));
+      }
+      // Preserve the original object URL, including Alibaba OSS signatures.
+      // Only Google Drive and Microsoft sharing URLs need rewriting.
+      const downloadUrl = hop === 0 && !microsoftShare && hostname !== "drive.google.com" && hostname !== "docs.google.com" ? link : url.toString();
+      const response = await fetch(downloadUrl, { ...init, headers, redirect: "manual", signal: controller.signal });
+      const location = response.headers.get("Location");
+      if (![301, 302, 303, 307, 308].includes(response.status) || !location) return response;
+      try {
+        if (hop === 5) throw new HttpError(502, "Source redirected too many times.");
+        const next = new URL(location, url);
+        if (next.protocol !== "https:") throw new HttpError(502, "Source redirect must use HTTPS.");
+        if (microsoftShare && url.hostname.toLowerCase() === cookieHost) {
+          for (const setCookie of response.headers.getSetCookie()) {
+            const pair = setCookie.split(";", 1)[0].trim();
+            const separator = pair.indexOf("=");
+            const name = pair.slice(0, separator);
+            if (separator > 0 && /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(name)) cookies.set(name, pair.slice(separator + 1));
+          }
+        }
+        url = next;
+      } finally { await response.body?.cancel(); }
+    }
+    throw new HttpError(502, "Source redirected too many times.");
+  }
   finally { clearTimeout(timeout); }
 }
 
@@ -207,6 +274,22 @@ function safeFilename(value: string): string { return value.replace(/[^A-Za-z0-9
 function escapeWhere(value: string): string { return value.replace(/[~(),]/g, "\\$&"); }
 function isShortString(value: unknown): value is string { return typeof value === "string" && value.length > 0 && value.length <= 512; }
 function safeError(error: unknown): string { return error instanceof HttpError ? error.message : "upstream error"; }
+async function readProbeBytes(body: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+  const reader = body.getReader(); const chunks: Uint8Array[] = []; let total = 0;
+  try {
+    while (total < MAX_PROBE_BYTES) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = value.byteLength > MAX_PROBE_BYTES - total ? value.slice(0, MAX_PROBE_BYTES - total) : value;
+      chunks.push(chunk); total += chunk.byteLength;
+    }
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+  const bytes = new Uint8Array(total); let offset = 0;
+  for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+  return bytes;
+}
 function limitStream(body: ReadableStream<Uint8Array>, maximum: number): ReadableStream<Uint8Array> {
   let total = 0;
   return body.pipeThrough(new TransformStream({ transform(chunk, controller) { total += chunk.byteLength; if (total > maximum) { controller.error(new Error("Source response exceeded the service size limit.")); return; } controller.enqueue(chunk); } }));
