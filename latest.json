@@ -7,14 +7,14 @@
       "language": "zh-TW",
       "series": "reading",
       "edition": "standard",
-      "Collection": "V1",
+      "tbpedia": "V1",
       "path": "manifests/zh-tw/reading/standard/V1/latest.json"
     },
     {
       "language": "zh-TW",
       "series": "reading",
       "edition": "advanced",
-      "Collection": "V1",
+      "tbpedia": "V1",
       "path": "manifests/zh-tw/reading/advanced/V1/latest.json"
     }
   ]
