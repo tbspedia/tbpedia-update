@@ -4,10 +4,10 @@ An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbp
 
 ## Repository layout
 
-Plugin `data.json` stores the starting release separately from installed updates, immediately after `Collection`:
+Plugin `data.json` stores the starting release separately from installed updates, immediately after `tbpedia`:
 
 ```json
-"Collection": "V1",
+"tbpedia": "V1",
 "baseRelease": {
   "releaseVersion": "2026.9.30",
   "releaseId": "2026-9-30.1"
@@ -44,7 +44,7 @@ pnpm run build
 
 Copy `main.js` and `manifest.json` to `.obsidian/plugins/tbpedia-update/` in a test vault, enable **Tbpedia Update**, then select the preferred Interface language in plugin settings. Configure the installed collection language using `languageCode` in plugin `data.json`. Standard uses `manifests/<language>/<series>/standard/V1/latest.json`; Advanced uses `manifests/<language>/<series>/advanced/V1/latest.json`. For example, a Traditional Chinese vault retrieves `https://raw.githubusercontent.com/tbspedia/tbpedia-update/main/manifests/zh-tw/reading/standard/V1/latest.json`.
 
-The plugin stores the interface selection separately as `interfaceLanguage`, preserving `languageCode` in `.obsidian/plugins/tbpedia-update/data.json`, with `seriesId` and `editionId` immediately after `languageCode`, followed by `Collection: "V1"` and `installed`. These IDs default to `reading` and `standard`. The Vault edition dropdown has been removed; saved edition values remain available for update routing. Update checks validate the manifest against the configured language, series, and edition. Existing saved data receives the fields when the plugin loads. The **Check for content updates on startup** toggle defaults to enabled, including for existing installations, and can be disabled in plugin settings. Startup checks run after the workspace is ready and show the update dialog when releases are available; they stay quiet when content is current. Manual checks remain available through the ribbon and command. The Interface language setting initially displays the saved collection language when no interface preference is saved. A fresh install without a configured `languageCode` deliberately does not fetch a manifest.
+The plugin stores the interface selection separately as `interfaceLanguage`, preserving `languageCode` in `.obsidian/plugins/tbpedia-update/data.json`, with `seriesId` and `editionId` immediately after `languageCode`, followed by `tbpedia: "V1"` and `installed`. Fresh installations leave `languageCode`, `seriesId`, and `editionId` empty until the vault owner configures them. The Vault edition dropdown has been removed; saved edition values remain available for update routing. Update checks validate the manifest against the configured language, series, and edition. Existing saved data receives the fields when the plugin loads. The **Check for content updates on startup** toggle defaults to enabled, including for existing installations, and can be disabled in plugin settings. Startup checks run after the workspace is ready and show the update dialog when releases are available; they stay quiet when content is current. Manual checks remain available through the ribbon and command. The Interface language setting initially displays the saved collection language when no interface preference is saved. A fresh install without a configured `languageCode` deliberately does not fetch a manifest.
 
 The **Release information** tab in plugin settings reads the configured collection's `latest.json`. It shows the title, language code, series, edition, and Collection above a table containing release versions, publication dates, summaries, added/updated/removed counts, downloaded status, and selection checkboxes. **Yes (installed)** means the installed release history records the release as completed, including legacy version records; downloading a ZIP without completing installation does not mark it as installed. Installed releases cannot be selected. Selecting a release includes its required dependencies automatically. Independent releases can be selected alone. Releases without dependency metadata keep the sequential behavior. **Download selected releases** opens a confirmation listing the complete ordered batch before installation. Use **Refresh** to reload the table. Viewing release information does not install updates or modify saved release history.
 
@@ -160,8 +160,30 @@ Installed state stores ownedFiles as an object keyed by release ID, containing h
 
 ### Manifest identity field
 
-The language/series/edition identity object is named `tbpedia`. The former lowercase `collection` key is rejected. Uppercase `Collection` remains the version string (for example `V1`), including in saved plugin data and the manifest index. Publish the updated manifests together with the rebuilt plugin; older plugin builds expect the previous identity key.
+The language/series/edition identity object is named `tbpedia`. The former lowercase `collection` key is rejected. Content release manifests retain uppercase `Collection` as their version string (for example `V1`). Saved plugin data uses lowercase `tbpedia` for that version string and migrates the legacy saved `Collection` field automatically. Publish the updated manifests together with the rebuilt plugin; older plugin builds expect the previous identity key.
 
 ### Excel manifest editor
 
 [Workbook, Windows Python converter and instructions](tools/manifest-excel/README.md) are included in this repository. Each sheet exports the current `tbpedia` identity format while retaining uppercase `Collection`. Run `py -3 tools/manifest-excel/test_converter.py` to verify the workbook and converter.
+
+### First-install saved data
+
+A first install creates the following `data.json`. Configure the three identity fields before checking for updates. Existing settings, installed history, and saved base releases are preserved.
+
+```json
+{
+  "languageCode": "",
+  "seriesId": "",
+  "editionId": "",
+  "tbpedia": "V1",
+  "baseRelease": {
+    "releaseVersion": "2026.9.30",
+    "releaseId": "2026-9-30.1"
+  },
+  "checkForUpdatesOnStartup": true,
+  "installed": {
+    "ownedFiles": {},
+    "appliedReleaseIds": []
+  }
+}
+```

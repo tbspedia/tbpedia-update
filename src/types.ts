@@ -52,12 +52,12 @@ export interface InstalledState {
 
 export interface PluginData {
   checkForUpdatesOnStartup: boolean;
-  languageCode?: SupportedLanguage;
+  languageCode?: SupportedLanguage | "";
   interfaceLanguage?: SupportedLanguage;
   notifiedReleaseIds?: string[];
   seriesId: string;
   editionId: string;
-  Collection: string;
+  tbpedia: string;
   installed: InstalledState;
   baseRelease?: { releaseVersion?: string; releaseId?: string };
 }

@@ -1,23 +1,17 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from "obsidian";
 import { OverwriteDecision, UpdateService } from "./update-service";
 import { PluginData, ReleaseEntry, ReleaseManifest, SUPPORTED_LANGUAGES, UpdateBatch } from "./types";
-import { migrateOwnedFiles } from "./ownership";
-import { initializeBaseRelease } from "./base-release";
-
-const DEFAULT_DATA: PluginData = { checkForUpdatesOnStartup: true, seriesId: "reading", editionId: "standard", Collection: "V1", installed: { ownedFiles: {}, appliedReleaseIds: [] } };
+import { initializePluginData } from "./plugin-data";
 
 export default class TbpediaUpdatePlugin extends Plugin {
-  private data: PluginData = DEFAULT_DATA;
+  private data: PluginData = initializePluginData();
   private updater!: UpdateService;
   private settingsTab!: TbpediaUpdateSettingsTab;
   private checking = false;
   private installing = false;
 
   async onload(): Promise<void> {
-    const saved = await this.loadData() ?? {};
-    this.data = { ...DEFAULT_DATA, ...saved, installed: { ownedFiles: {}, appliedReleaseIds: [], ...saved.installed } };
-    this.data.installed.ownedFiles = migrateOwnedFiles(this.data.installed.ownedFiles, this.data.installed);
-    this.data.baseRelease = initializeBaseRelease(this.data);
+    this.data = initializePluginData(await this.loadData());
     await this.persistData(this.data);
     this.updater = new UpdateService(this.app, this.manifest.version, () => this.data, (data) => this.persistData(data));
     this.settingsTab = new TbpediaUpdateSettingsTab(this.app, this);
@@ -25,7 +19,7 @@ export default class TbpediaUpdatePlugin extends Plugin {
     this.addRibbonIcon("download", "Check Tbpedia updates", () => void this.checkForUpdate());
     this.addCommand({ id: "check-for-content-update", name: "Check for content update", callback: () => void this.checkForUpdate() });
     this.app.workspace.onLayoutReady(() => {
-      if (this.data.checkForUpdatesOnStartup && this.data.languageCode) void this.checkForUpdate(true);
+      if (this.data.checkForUpdatesOnStartup && this.data.languageCode && this.data.seriesId && this.data.editionId) void this.checkForUpdate(true);
     });
   }
 
@@ -78,12 +72,12 @@ export default class TbpediaUpdatePlugin extends Plugin {
   isReleaseInstalled(release: ReleaseEntry, manifest: ReleaseManifest): boolean { return this.updater.isReleaseInstalled(release, manifest); }
 
   private async persistData(data: PluginData): Promise<void> {
-    const { languageCode, seriesId, editionId, Collection, baseRelease, ...rest } = data;
-    this.data = { languageCode, seriesId, editionId, Collection, baseRelease, ...rest };
+    const { languageCode, seriesId, editionId, tbpedia, baseRelease, ...rest } = data;
+    this.data = { languageCode, seriesId, editionId, tbpedia, baseRelease, ...rest };
     await this.saveData(this.data);
   }
 
-  get interfaceLanguage(): PluginData["interfaceLanguage"] { return this.data.interfaceLanguage ?? this.data.languageCode; }
+  get interfaceLanguage(): PluginData["interfaceLanguage"] { return this.data.interfaceLanguage ?? (this.data.languageCode || undefined); }
   get checkForUpdatesOnStartup(): boolean { return this.data.checkForUpdatesOnStartup; }
   get baseRelease(): NonNullable<PluginData["baseRelease"]> { return this.data.baseRelease ?? {}; }
 }

@@ -26,7 +26,7 @@ async function load(file) {
   raw.releases.push(third);
   const manifest = parseAndValidateManifest(raw);
   assert.deepEqual(manifest.releases[1].dependsOn, []);
-  let data = { languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', Collection: 'V1', installed: { ownedFiles: {}, appliedReleaseIds: [], releaseVersion: '2026.9.30' } };
+  let data = { languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', tbpedia: 'V1', installed: { ownedFiles: {}, appliedReleaseIds: [], releaseVersion: '2026.9.30' } };
   const baseline = { releaseVersion: '2026.9.30', releaseId: '2026-9-30.1' };
   assert.deepEqual(initializeBaseRelease({ ...data, installed: { ...data.installed, appliedReleaseIds: ['2026-9-30.1', b], releaseVersion: '2026.11.1' } }), baseline);
   assert.deepEqual(initializeBaseRelease({ ...data, installed: { ...data.installed, trackingVersion: 2, appliedReleaseIds: [b], ownedFiles: { [b]: [] } } }), {});

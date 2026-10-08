@@ -35,7 +35,7 @@ export class UpdateService {
     const language = this.getData().languageCode;
     if (!language) throw new Error("This vault’s Tbpedia collection language is missing. Configure languageCode in the plugin’s data.json first.");
     const edition = this.getData().editionId;
-    const manifest = await this.fetchManifest(language, this.getData().seriesId, edition, this.getData().Collection);
+    const manifest = await this.fetchManifest(language, this.getData().seriesId, edition, this.getData().tbpedia);
     this.assertSelectedCollection(manifest);
     return manifest;
   }
@@ -150,7 +150,7 @@ export class UpdateService {
   private async fetchManifest(language: SupportedLanguage, series: string, edition: string, collection: string): Promise<ReleaseManifest> {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(series)) throw new Error("The configured Tbpedia series ID is invalid.");
     if (edition !== "standard" && edition !== "advanced") throw new Error("Choose a supported Tbpedia edition in the plugin settings.");
-    if (!/^V[1-9]\d*$/.test(collection)) throw new Error("The configured Collection must be a version such as V1.");
+    if (!/^V[1-9]\d*$/.test(collection)) throw new Error("The configured tbpedia version must be a version such as V1.");
     const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}/${edition}/${collection}/latest.json`, method: "GET", throw: false });
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
@@ -160,7 +160,7 @@ export class UpdateService {
 
   private assertSelectedCollection(manifest: ReleaseManifest): void {
     const data = this.getData();
-    if (manifest.tbpedia.language.code !== data.languageCode || manifest.tbpedia.series.id !== data.seriesId || manifest.tbpedia.edition.id !== data.editionId || manifest.Collection !== data.Collection) {
+    if (manifest.tbpedia.language.code !== data.languageCode || manifest.tbpedia.series.id !== data.seriesId || manifest.tbpedia.edition.id !== data.editionId || manifest.Collection !== data.tbpedia) {
       throw new Error("The release manifest does not match the selected language, series, edition, and Collection. Check for updates again after changing settings.");
     }
   }
