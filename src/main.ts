@@ -170,7 +170,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       table.style.borderCollapse = "collapse";
       table.createEl("caption", { text: "Available releases (newest first)" });
       const header = table.createEl("thead").createEl("tr");
-      for (const label of ["Select", "ReleaseVersion", "Published date", "ReleaseNote: Summary", "Added", "Updated", "Removed", "Dependencies", "Downloaded"]) {
+      for (const label of ["Select", "ReleaseVersion", "Published date", "Downloaded", "ReleaseNote: Summary", "Added", "Updated", "Removed", "Dependencies"]) {
         const cell = header.createEl("th", { text: label });
         cell.setAttribute("scope", "col");
       }
@@ -213,9 +213,9 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
         });
         const date = new Date(release.publishedAt);
         const values = [release.releaseVersion, date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
+          installed ? "Yes (installed)" : "No",
           release.releaseNotes.summary, String(release.releaseNotes.added), String(release.releaseNotes.updated), String(release.releaseNotes.removed),
-          release.dependsOn === undefined ? "All earlier releases" : release.dependsOn.length ? release.dependsOn.join(", ") : "None (independent)",
-          installed ? "Yes (installed)" : "No"];
+          release.dependsOn === undefined ? "All earlier releases" : release.dependsOn.length ? release.dependsOn.join(", ") : "None (independent)"];
         for (const [index, value] of values.entries()) {
           const cell = row.createEl("td", { text: value });
           if (index === 1) cell.title = release.publishedAt;
