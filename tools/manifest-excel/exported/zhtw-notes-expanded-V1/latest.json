@@ -3,16 +3,16 @@
   "product": "Tbpedia-Distribute",
   "plugin": "tbpedia-update",
   "channel": "stable",
-  "title": "真佛百科閱讀系列高級版本",
+  "title": "真佛百科筆記系列擴充版本",
   "tbpedia": {
     "language": {
       "code": "zh-TW"
     },
     "series": {
-      "id": "reading"
+      "id": "notes"
     },
     "edition": {
-      "id": "advanced"
+      "id": "expanded"
     }
   },
   "Collection": "V1",
@@ -40,19 +40,30 @@
   ],
   "releases": [
     {
-      "releaseVersion": "zh-tw-reading-advanced-2026.08.1",
-      "releaseId": "zh-tw-reading-advanced-2026-8-1.1",
-      "publishedAt": "2026-08-01T08:00:00Z",
-      "filename": "zh-tw-reading-advanced-2026-8-1.1.zip",
+      "releaseVersion": "zh-tw-notes-expanded-2026.10.1",
+      "releaseId": "zh-tw-notes-expanded-2026-10-1.1",
+      "publishedAt": "2026-10-01T08:00:00Z",
+      "filename": "zh-tw-notes-expanded-2026-10-1.1.zip",
       "files": [
         {
           "path": "01 文集部/測試更新-2026-10-1.md",
           "change": "+"
-        },
-        {
-          "path": "01 文集部/測試更新-2026-10-2.md",
-          "change": "~"
-        },
+        }
+      ],
+      "deletions": [],
+      "releaseNotes": {
+        "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+        "added": 1,
+        "updated": 0,
+        "removed": 0
+      }
+    },
+    {
+      "releaseVersion": "zh-tw-notes-expanded-2026.11.1",
+      "releaseId": "zh-tw-notes-expanded-2026-11-1.1",
+      "publishedAt": "2026-11-01T08:00:00Z",
+      "filename": "zh-tw-notes-expanded-2026-11-1.2.zip",
+      "files": [
         {
           "path": "01 文集部/測試更新-2026-11-1.md",
           "change": "+"
@@ -60,9 +71,9 @@
       ],
       "deletions": [],
       "releaseNotes": {
-        "summary": "真佛百科閱讀系列高級版本：2026 年 8 月第 1 次更新。",
-        "added": 2,
-        "updated": 1,
+        "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+        "added": 1,
+        "updated": 0,
         "removed": 0
       }
     }

@@ -30,7 +30,7 @@ export interface ReleaseManifest {
   plugin: "tbpedia-update";
   channel: "stable";
   title: string;
-  collection: {
+  tbpedia: {
     language: { code: string };
     series: { id: string };
     edition: { id: string };

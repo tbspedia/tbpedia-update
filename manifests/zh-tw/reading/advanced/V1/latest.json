@@ -4,7 +4,7 @@
   "plugin": "tbpedia-update",
   "channel": "stable",
   "title": "真佛百科閱讀系列高級版本",
-  "collection": {
+  "tbpedia": {
     "language": {
       "code": "zh-TW"
     },

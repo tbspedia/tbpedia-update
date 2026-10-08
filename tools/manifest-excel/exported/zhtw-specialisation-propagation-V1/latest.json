@@ -3,16 +3,16 @@
   "product": "Tbpedia-Distribute",
   "plugin": "tbpedia-update",
   "channel": "stable",
-  "title": "真佛百科閱讀系列標準版本",
+  "title": "真佛百科專修系列弘法版本",
   "tbpedia": {
     "language": {
       "code": "zh-TW"
     },
     "series": {
-      "id": "reading"
+      "id": "specialisation"
     },
     "edition": {
-      "id": "standard"
+      "id": "propagation"
     }
   },
   "Collection": "V1",
@@ -40,10 +40,10 @@
   ],
   "releases": [
     {
-      "releaseVersion": "zh-tw-reading-standard-2026.10.1",
-      "releaseId": "zh-tw-reading-standard-2026-10-1.1",
+      "releaseVersion": "zh-tw-specialisation-propagation-2026.10.1",
+      "releaseId": "zh-tw-specialisation-propagation-2026-10-1.1",
       "publishedAt": "2026-10-01T08:00:00Z",
-      "filename": "zh-tw-reading-standard-2026-10-1.1.zip",
+      "filename": "zh-tw-specialisation-propagation-2026-10-1.1.zip",
       "files": [
         {
           "path": "01 文集部/測試更新-2026-10-1.md",
@@ -52,17 +52,17 @@
       ],
       "deletions": [],
       "releaseNotes": {
-        "summary": "測試：2026 年 10 月第 1 次增量更新。",
+        "summary": "模板：真佛百科專修系列弘法版本。請更新日期、檔案清單與版本後使用。",
         "added": 1,
         "updated": 0,
         "removed": 0
       }
     },
     {
-      "releaseVersion": "zh-tw-reading-standard-2026.11.1",
-      "releaseId": "zh-tw-reading-standard-2026-11-1.1",
+      "releaseVersion": "zh-tw-specialisation-propagation-2026.11.1",
+      "releaseId": "zh-tw-specialisation-propagation-2026-11-1.1",
       "publishedAt": "2026-11-01T08:00:00Z",
-      "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
+      "filename": "zh-tw-specialisation-propagation-2026-11-1.2.zip",
       "files": [
         {
           "path": "01 文集部/測試更新-2026-11-1.md",
@@ -71,7 +71,7 @@
       ],
       "deletions": [],
       "releaseNotes": {
-        "summary": "測試：2026 年 11 月第 1 次增量更新。",
+        "summary": "模板：真佛百科專修系列弘法版本。請更新日期、檔案清單與版本後使用。",
         "added": 1,
         "updated": 0,
         "removed": 0

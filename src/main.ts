@@ -36,7 +36,7 @@ export default class TbpediaUpdatePlugin extends Plugin {
       const batch = await this.updater.check();
       if (!batch) { if (!silentWhenCurrent) new Notice("Your Tbpedia content is up to date."); return; }
       const latest = batch.releases.at(-1)!;
-      const key = `${batch.manifest.collection.language.code}/${batch.manifest.collection.series.id}/${batch.manifest.collection.edition.id}/${batch.manifest.Collection}/${latest.releaseId}`;
+      const key = `${batch.manifest.tbpedia.language.code}/${batch.manifest.tbpedia.series.id}/${batch.manifest.tbpedia.edition.id}/${batch.manifest.Collection}/${latest.releaseId}`;
       if (this.data.notifiedReleaseIds?.includes(key)) return;
       await this.persistData({ ...this.data, notifiedReleaseIds: [...(this.data.notifiedReleaseIds ?? []), key] });
       new ReleaseNoticeModal(this.app, batch.manifest, latest, () => this.openReleaseInformation()).open();
@@ -158,9 +158,9 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       metadata.style.gridTemplateColumns = "max-content 1fr";
       metadata.style.columnGap = "16px";
       for (const [label, value] of [
-        ["Language Code", manifest.collection.language.code],
-        ["Series", manifest.collection.series.id],
-        ["Edition", manifest.collection.edition.id],
+        ["Language Code", manifest.tbpedia.language.code],
+        ["Series", manifest.tbpedia.series.id],
+        ["Edition", manifest.tbpedia.edition.id],
         ["Collection", manifest.Collection],
         ["Base Release", this.plugin.baseRelease.releaseVersion ?? this.plugin.baseRelease.releaseId ?? "Not configured"],
         ["Base Release ID", this.plugin.baseRelease.releaseId ?? "Not configured"],

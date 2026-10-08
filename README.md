@@ -54,7 +54,7 @@ The plugin validates the collection tuple, exact approved managed roots, release
 
 ## Incremental release history
 
-Each language has its own `manifests/<language>/<series>/<edition>/<Collection>/latest.json`, using `schemaVersion: 2` and retaining an ordered `releases` array. The root `latest.json` is only a small public manifest index. Each release entry has its own ZIP, source rows in NocoDB, exact `files` inventory, explicit `deletions`, and release notes. A ZIP contains only that release's new or changed managed Markdown files; it is not a full vault snapshot.
+Each language has its own `manifests/<language>/<series>/<edition>/<Collection>/latest.json`, using `schemaVersion: 2`, the `tbpedia` identity object, and retaining an ordered `releases` array. The root `latest.json` is only a small public manifest index. Each release entry has its own ZIP, source rows in NocoDB, exact `files` inventory, explicit `deletions`, and release notes. A ZIP contains only that release's new or changed managed Markdown files; it is not a full vault snapshot.
 
 Supported vault language codes are `en`, `ja`, `fr`, `es`, `de`, `nl`, `sv`, `ko`, `zh-TW`, `zh-CN`, `vi`, `id`, `th`, and `bo`. Directory names are always lowercase, so `zh-TW` uses `manifests/zh-tw/reading/standard/V1/latest.json` and `zh-CN` uses `manifests/zh-cn/reading/standard/V1/latest.json`.
 
@@ -82,7 +82,7 @@ For example, a vault recorded at `zh-tw-reading-standard-2026.9.30` receives the
   "plugin": "tbpedia-update",
   "channel": "stable",
   "title": "真佛百科閱讀系列標準版本",
-  "collection": {
+  "tbpedia": {
     "language": { "code": "zh-TW" },
     "series": { "id": "true-buddha-encyclopedia-reading" },
     "edition": { "id": "standard" }
@@ -157,3 +157,11 @@ Before publishing a release, upload its incremental ZIP and enable its matching 
 When adding a new language, create and validate `manifests/<lowercase-language>/<series>/<edition>/<Collection>/latest.json`, add its path to root `latest.json`, create the corresponding enabled `Updateinfo` rows, and then configure that language as `languageCode` in a test vault plugin `data.json`.
 
 Installed state stores ownedFiles as an object keyed by release ID, containing historical file change records matching the manifest: { "path": "01 文集部/note.md", "change": "+" }. The change field follows path: + means added, ~ means modified, and - means deleted. Deleted entries are excluded from ZIP inventories and remain in release history. Current ownership is computed by replaying applied releases. The legacy deletions array is still supported; matching - entries may also appear in files. Legacy entries without indicators are inferred from manifest history; unmatched saved paths retain provisional + indicators in a legacy group.
+
+### Manifest identity field
+
+The language/series/edition identity object is named `tbpedia`. The former lowercase `collection` key is rejected. Uppercase `Collection` remains the version string (for example `V1`), including in saved plugin data and the manifest index. Publish the updated manifests together with the rebuilt plugin; older plugin builds expect the previous identity key.
+
+### Excel manifest editor
+
+[Workbook, Windows Python converter and instructions](tools/manifest-excel/README.md) are included in this repository. Each sheet exports the current `tbpedia` identity format while retaining uppercase `Collection`. Run `py -3 tools/manifest-excel/test_converter.py` to verify the workbook and converter.

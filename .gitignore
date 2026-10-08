@@ -1,2 +1,4 @@
 node_modules/
 .pnpm-store/
+
+tools/manifest-excel/__pycache__/

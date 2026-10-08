@@ -5,6 +5,7 @@ const REQUIRED_STRING_FIELDS = ["title", "minimumPluginVersion", "minimumObsidia
 
 export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   if (!isRecord(input)) throw new Error("Release manifest must be a JSON object.");
+  if ("collection" in input) throw new Error("The lowercase collection field was renamed to tbpedia. Keep uppercase Collection for the version.");
   for (const forbidden of ["signature", "payload", "collectionKey", "sha256", "size", "downloadUrl", "url"]) {
     if (forbidden in input) throw new Error(`Manifest contains unsupported field: ${forbidden}.`);
   }
@@ -12,9 +13,9 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   if (input.channel !== "stable") throw new Error("Only the stable release channel is supported.");
   if (typeof input.Collection !== "string" || !/^V[1-9]\d*$/.test(input.Collection)) throw new Error("Collection must be a version such as V1.");
   for (const field of REQUIRED_STRING_FIELDS) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Manifest field ${field} is invalid.`);
-  if (!isRecord(input.collection) || !isCollectionPart(input.collection.language, "code") || !isCollectionPart(input.collection.series, "id") || !isCollectionPart(input.collection.edition, "id")) throw new Error("Collection identity is invalid.");
-  const collection = input.collection as ReleaseManifest["collection"];
-  const releaseKey = [collection.language.code, collection.series.id, collection.edition.id].join("-").toLowerCase();
+  if (!isRecord(input.tbpedia) || !isTbpediaPart(input.tbpedia.language, "code") || !isTbpediaPart(input.tbpedia.series, "id") || !isTbpediaPart(input.tbpedia.edition, "id")) throw new Error("tbpedia identity is invalid.");
+  const tbpedia = input.tbpedia as ReleaseManifest["tbpedia"];
+  const releaseKey = [tbpedia.language.code, tbpedia.series.id, tbpedia.edition.id].join("-").toLowerCase();
   if (!Array.isArray(input.managedRoots) || !sameSet(input.managedRoots, [...MANAGED_ROOTS])) throw new Error("managedRoots does not match the approved boundary.");
   if (!Array.isArray(input.releases) || input.releases.length === 0) throw new Error("releases must be a non-empty array.");
 
@@ -108,6 +109,6 @@ function parseReleaseId(value: string): { key?: string; year: number; month: num
 }
 function compareDates(a: { year: number; month: number; day: number }, b: { year: number; month: number; day: number }): number { return a.year - b.year || a.month - b.month || a.day - b.day; }
 function validDate(year: number, month: number, day: number): boolean { const date = new Date(Date.UTC(year, month - 1, day)); return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day; }
-function isCollectionPart(value: unknown, identity: "code" | "id"): value is Record<string, string> { return isRecord(value) && typeof value[identity] === "string" && value[identity].trim().length > 0; }
+function isTbpediaPart(value: unknown, identity: "code" | "id"): value is Record<string, string> { return isRecord(value) && typeof value[identity] === "string" && value[identity].trim().length > 0; }
 function isRecord(value: unknown): value is Record<string, any> { return typeof value === "object" && value !== null && !Array.isArray(value); }
 function sameSet(values: unknown[], expected: string[]): boolean { return values.length === expected.length && new Set(values).size === values.length && values.every((value) => typeof value === "string" && expected.includes(value)); }

@@ -10,7 +10,8 @@
     "test:dependencies": "node scripts/test-release-dependencies.cjs",
     "worker:dev": "wrangler dev --config worker/wrangler.toml",
     "worker:deploy": "wrangler deploy --config worker/wrangler.toml",
-    "worker:check": "tsc --noEmit -p worker/tsconfig.json"
+    "worker:check": "tsc --noEmit -p worker/tsconfig.json",
+    "test:identity": "node scripts/test-manifest-identity.cjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261002.1",

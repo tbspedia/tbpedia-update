@@ -25,7 +25,7 @@ export class UpdateService {
     const manifest = await this.getReleaseManifest();
     this.assertCompatible(manifest);
     const data = this.getData();
-    await this.saveData({ ...data, seriesId: manifest.collection.series.id, editionId: manifest.collection.edition.id,
+    await this.saveData({ ...data, seriesId: manifest.tbpedia.series.id, editionId: manifest.tbpedia.edition.id,
       installed: { ...data.installed, ownedFiles: migrateOwnedFiles(data.installed.ownedFiles, data.installed, manifest) } });
     const releases = this.missingReleases(manifest);
     return releases.length ? { manifest, releases } : null;
@@ -139,7 +139,7 @@ export class UpdateService {
       return ids;
     }
     if (!installed.releaseVersion) return ids;
-    const key = [manifest.collection.language.code, manifest.collection.series.id, manifest.collection.edition.id].join("-").toLowerCase();
+    const key = [manifest.tbpedia.language.code, manifest.tbpedia.series.id, manifest.tbpedia.edition.id].join("-").toLowerCase();
     if (!installed.releaseVersion.startsWith(`${key}-`) && !/^\d{4}\./.test(installed.releaseVersion)) {
       return ids;
     }
@@ -160,7 +160,7 @@ export class UpdateService {
 
   private assertSelectedCollection(manifest: ReleaseManifest): void {
     const data = this.getData();
-    if (manifest.collection.language.code !== data.languageCode || manifest.collection.series.id !== data.seriesId || manifest.collection.edition.id !== data.editionId || manifest.Collection !== data.Collection) {
+    if (manifest.tbpedia.language.code !== data.languageCode || manifest.tbpedia.series.id !== data.seriesId || manifest.tbpedia.edition.id !== data.editionId || manifest.Collection !== data.Collection) {
       throw new Error("The release manifest does not match the selected language, series, edition, and Collection. Check for updates again after changing settings.");
     }
   }
@@ -175,8 +175,8 @@ export class UpdateService {
 
   private async createTransaction(manifest: ReleaseManifest, release: ReleaseEntry): Promise<UpdateTransaction> {
     const response = await this.api("/updates/transactions", "POST", {
-      title: manifest.title, version: release.releaseVersion, filename: release.filename, language: manifest.collection.language.code,
-      series: manifest.collection.series.id, edition: manifest.collection.edition.id,
+      title: manifest.title, version: release.releaseVersion, filename: release.filename, language: manifest.tbpedia.language.code,
+      series: manifest.tbpedia.series.id, edition: manifest.tbpedia.edition.id,
       device_type: Platform.isMobile ? "mobile" : "desktop", os: navigator.platform,
       client_version: `${this.appVersion() ?? "unknown"}; plugin/${this.pluginVersion}`, user_agent: navigator.userAgent,
     });
@@ -185,7 +185,7 @@ export class UpdateService {
   }
 
   private async getSources(manifest: ReleaseManifest, release: ReleaseEntry, transaction: UpdateTransaction): Promise<Source[]> {
-    const query = new URLSearchParams({ language: manifest.collection.language.code, series: manifest.collection.series.id, edition: manifest.collection.edition.id, title: manifest.title, version: release.releaseVersion, filename: release.filename });
+    const query = new URLSearchParams({ language: manifest.tbpedia.language.code, series: manifest.tbpedia.series.id, edition: manifest.tbpedia.edition.id, title: manifest.title, version: release.releaseVersion, filename: release.filename });
     const response = await this.api(`/updates/sources?${query}`, "GET", undefined, transaction);
     if (!Array.isArray(response.sources)) throw new Error("Update service returned an invalid source list.");
     return response.sources.filter(isSource);
