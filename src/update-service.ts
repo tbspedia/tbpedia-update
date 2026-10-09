@@ -232,7 +232,7 @@ export class UpdateService {
     const actual: string[] = []; let totalUncompressed = 0;
     for (const entry of Object.values(zip.files)) {
       const entryName = entry.dir ? entry.name.replace(/\/$/, "") : entry.name;
-      if (entryName) assertManagedPath(entryName);
+      if (entryName && !(entry.dir && entryName === ".obsidian")) assertManagedPath(entryName);
       if (entry.dir) continue;
       if (actual.length >= MAX_FILES) throw new Error("Release archive has too many files.");
       const path = assertManagedPath(entry.name);

@@ -1,10 +1,7 @@
 import { MANAGED_ROOTS } from "./types";
 
 const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
-const OBSIDIAN_FILES = new Set([
-  ".obsidian/app.json", ".obsidian/appearance.json", ".obsidian/community-plugins.json",
-  ".obsidian/hotkeys.json", ".obsidian/workspace.json", ".obsidian/workspace-mobile.json"
-]);
+
 
 export function normalizePath(value: string): string {
   return value.normalize("NFC").replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\.\//, "");
@@ -22,7 +19,7 @@ export function assertManagedPath(value: string): string {
   if ((MANAGED_ROOTS as readonly string[]).includes(topLevel)) {
     return path;
   }
-  if (OBSIDIAN_FILES.has(path) || (!path.includes("/") && !path.startsWith("."))) return path;
+  if ((topLevel === ".obsidian" && segments.length > 1) || (!path.includes("/") && !path.startsWith("."))) return path;
   throw new Error(`Path is outside the managed boundary: ${value}`);
 }
 

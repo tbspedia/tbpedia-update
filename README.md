@@ -187,3 +187,7 @@ A first install creates the following `data.json`. Configure the three identity 
   }
 }
 ```
+
+### Obsidian configuration paths
+
+Release inventories may include any vault-relative file under `.obsidian/`, including fonts, themes, snippets, and plugin files. Windows backslashes are normalized to forward slashes by the plugin. Absolute paths, traversal segments, invalid Windows names, and paths outside the approved vault boundary are rejected. Existing ownership, overwrite confirmation, backup, and rollback rules still apply.
