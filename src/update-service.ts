@@ -261,8 +261,17 @@ export class UpdateService {
     const owned = currentOwnedPaths(previous);
     // Each release is incremental: only explicit deletions are removed. Earlier
     // releases remain installed after their ZIP has committed successfully.
-    const deletions = [...new Set(plan.deletions)];
-    for (const path of plan.writes) {
+    // Bundled data.json files are defaults; existing vault data always wins.
+    const preserved = new Set<string>();
+    for (const path of [...plan.writes, ...plan.deletions]) {
+      if (path.split("/").at(-1)?.toLowerCase() === "data.json" && await adapter.exists(path)) {
+        preserved.add(path);
+        progress(`Preserving existing ${path}`);
+      }
+    }
+    const writes = plan.writes.filter((path) => !preserved.has(path));
+    const deletions = [...new Set(plan.deletions)].filter((path) => !preserved.has(path));
+    for (const path of writes) {
       await assertNoReparsePoints(this.app, path);
       if (await adapter.exists(path)) {
         if ((await adapter.stat(path))?.type === "folder") throw new Error(`Refusing to replace a local folder: ${path}`);
@@ -291,7 +300,7 @@ export class UpdateService {
     const backupDir = `${transactionDir}/backup`;
     const journalPath = `${transactionDir}/transaction.json`;
     await mkdirp(adapter, backupDir);
-    const targets = [...new Set([...plan.writes, ...deletions])];
+    const targets = [...new Set([...writes, ...deletions])];
     const originals: Array<{ path: string; existed: boolean }> = [];
     for (const path of targets) {
       const existed = await adapter.exists(path); originals.push({ path, existed });
@@ -302,14 +311,14 @@ export class UpdateService {
     try {
       const zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false });
       for (const path of deletions) if (await adapter.exists(path)) await adapter.remove(path);
-      for (const path of plan.writes) {
+      for (const path of writes) {
         progress(`Writing ${path}…`);
         await mkdirp(adapter, parent(path));
         const entry = zip.file(path);
         if (!entry) throw new Error(`Archive entry disappeared: ${path}`);
         await writeBinary(adapter, path, await entry.async("uint8array"));
       }
-      const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.map((file) => ({ ...file })) };
+      const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.filter((file) => !preserved.has(file.path)).map((file) => ({ ...file })) };
       await this.saveData({ ...this.getData(), installed: {
         trackingVersion: 2,
         releaseVersion: plan.release.releaseVersion,
