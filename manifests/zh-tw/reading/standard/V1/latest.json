@@ -60,7 +60,7 @@
     },
     {
       "releaseVersion": "zh-tw-reading-standard-2026.11.1",
-      "releaseId": "zh-tw-reading-standard-2026-11-1.1",
+      "releaseId": "zh-tw-reading-standard-2026-11-1.2",
       "publishedAt": "2026-11-01T08:00:00Z",
       "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
       "files": [
@@ -75,6 +75,40 @@
         "added": 1,
         "updated": 0,
         "removed": 0
+      }
+    },
+    {
+      "releaseVersion": "zh-tw-reading-standard-2026.11.10",
+      "releaseId": "zh-tw-reading-standard-2026-11-10.3",
+      "publishedAt": "2026-11-01T08:00:00Z",
+      "filename": "zh-tw-reading-standard-2026-11-10.3.zip",
+      "files": [
+        {
+          "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+          "change": "+"
+        }
+      ],
+      "deletions": [
+        "00 說明/搜索 (search) 9.md",
+        "00 說明/搜索 (search) 8.md"
+      ],
+      "releaseNotes": {
+        "summary": "測試：2026 年 11 月 10 日第 3 次增量更新。",
+        "added": 4,
+        "updated": 0,
+        "removed": 2
       }
     }
   ]
