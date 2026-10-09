@@ -151,7 +151,7 @@ export class UpdateService {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(series)) throw new Error("The configured Tbpedia series ID is invalid.");
     if (edition !== "standard" && edition !== "advanced") throw new Error("Choose a supported Tbpedia edition in the plugin settings.");
     if (!/^V[1-9]\d*$/.test(collection)) throw new Error("The configured tbpedia version must be a version such as V1.");
-    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}/${edition}/${collection}/latest.json`, method: "GET", throw: false });
+    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}/${edition}/${collection}/latest.json?check=${crypto.randomUUID()}`, method: "GET", headers: { "Cache-Control": "no-cache" }, throw: false });
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
     try { json = response.json; } catch { throw new Error("Release metadata is not valid JSON."); }

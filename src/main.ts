@@ -31,8 +31,8 @@ export default class TbpediaUpdatePlugin extends Plugin {
       if (!batch) { if (!silentWhenCurrent) new Notice("Your Tbpedia content is up to date."); return; }
       const latest = batch.releases.at(-1)!;
       const key = `${batch.manifest.tbpedia.language.code}/${batch.manifest.tbpedia.series.id}/${batch.manifest.tbpedia.edition.id}/${batch.manifest.Collection}/${latest.releaseId}`;
-      if (this.data.notifiedReleaseIds?.includes(key)) return;
-      await this.persistData({ ...this.data, notifiedReleaseIds: [...(this.data.notifiedReleaseIds ?? []), key] });
+      if (silentWhenCurrent && this.data.notifiedReleaseIds?.includes(key)) return;
+      if (!this.data.notifiedReleaseIds?.includes(key)) await this.persistData({ ...this.data, notifiedReleaseIds: [...(this.data.notifiedReleaseIds ?? []), key] });
       new ReleaseNoticeModal(this.app, batch.manifest, latest, () => this.openReleaseInformation()).open();
     } catch (error) { new Notice(`Could not check for Tbpedia updates: ${message(error)}`); }
     finally { this.checking = false; }
