@@ -141,6 +141,34 @@
       "dependsOn": [
         "zh-tw-reading-standard-2026-11-10.3"
       ]
+    },
+    {
+      "releaseVersion": "zh-tw-reading-standard-2026.11.22",
+      "releaseId": "zh-tw-reading-standard-2026-11-22.5",
+      "publishedAt": "2026-11-22",
+      "filename": "zh-tw-reading-standard-2026-11-22.5.zip",
+      "files": [
+        {
+          "path": "01 文集部/154 智慧的光環.md",
+          "change": "~"
+        },
+        {
+          "path": "01 文集部/300 回歸星河/C00 第三百本文集（序一）.md",
+          "change": "~"
+        },
+        {
+          "path": "New 首頁.md",
+          "change": "+"
+        }
+      ],
+      "releaseNotes": {
+        "summary": "測試：2026 年 11 月 22 日第 5 次增量更新。",
+        "added": 1,
+        "updated": 2,
+        "removed": 0
+      },
+      "dependsOn": [],
+      "deletions": []
     }
   ]
 }
