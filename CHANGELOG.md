@@ -2,6 +2,12 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.11 — 2026-10-10
+
+- Support manifest paths that refer to ZIP directories, including empty folders.
+- Preserve existing folders and roll back new empty folders when installation fails.
+- Record installed folder entries and identify them in My Download.
+
 ## 1.2.9 — 2026-10-10
 
 - Use YYYY-MM-DD publication dates in release manifests, Excel templates, exported JSON, and plugin release information.

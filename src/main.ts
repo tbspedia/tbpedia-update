@@ -206,7 +206,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
           const name = fileRow.createEl("td", { text: file.path.slice(split + 1) });
           name.title = file.path;
           fileRow.createEl("td", { text: split < 0 ? "Vault root" : file.path.slice(0, split) }).style.overflowWrap = "anywhere";
-          fileRow.createEl("td", { text: file.change === "+" ? "Added" : file.change === "~" ? "Updated" : "Removed" });
+          fileRow.createEl("td", { text: (file.type === "folder" ? "Folder: " : "") + (file.change === "+" ? "Added" : file.change === "~" ? "Updated" : "Removed") });
         }
         styleCells(details);
       });

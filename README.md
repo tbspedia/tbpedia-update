@@ -1,6 +1,6 @@
 # tbpedia-update
 
-An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.2.9** and the Worker version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history. Every Worker response includes `X-Tbpedia-Worker-Version`, which allows the deployed Worker version to be checked without exposing configuration or secrets.
+An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.2.11** and the Worker version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history. Every Worker response includes `X-Tbpedia-Worker-Version`, which allows the deployed Worker version to be checked without exposing configuration or secrets.
 
 ## Repository layout
 
@@ -230,3 +230,7 @@ Deletion targets already absent from the vault are skipped with an informational
 4. Open **Release information**, select the pending content release, and retry the update.
 
 A missing deletion target is informational and does not prevent completion. For example, if `00 說明/搜索 (search) 9.md` is listed for deletion but is not present, it is skipped and the remaining changes proceed. Existing unowned files outside the permitted collection-note deletion rules can still stop an update. Plugin releases attach `main.js` and `manifest.json`; the vault's existing `data.json` is preserved.
+
+### Adding folders in a release
+
+List a folder in `files` with its vault-relative path and `change: "+"`, just as for a file (for example `{"path":"80 我的書架","change":"+"}`). Include the directory itself in the ZIP, including when it is empty. The installer detects ZIP directory entries, creates missing folders, and preserves existing folders and their contents. Files inside a folder must each be listed separately in the manifest. Folder deletion is not supported. Folder support requires plugin version 1.2.11 or newer.

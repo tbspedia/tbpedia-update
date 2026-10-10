@@ -11,7 +11,7 @@ export const MANAGED_ROOTS = [
   "98 下載資料", "99 Setting"
 ] as const;
 
-export interface FileChange { path: string; change: "+" | "-" | "~"; }
+export interface FileChange { path: string; change: "+" | "-" | "~"; type?: "folder"; }
 
 export interface ReleaseEntry {
   releaseVersion: string;
@@ -90,6 +90,7 @@ export interface UpdatePlan {
   manifest: ReleaseManifest;
   release: ReleaseEntry;
   writes: string[];
+  folders?: string[];
   deletions: string[];
 }
 

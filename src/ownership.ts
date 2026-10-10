@@ -12,7 +12,8 @@ export function migrateOwnedFiles(value: LegacyFiles, installed: InstalledState,
     for (const release of manifest.releases) {
       if (!installed.appliedReleaseIds.includes(release.releaseId) && installed.releaseId !== release.releaseId) continue;
       const known = new Set(release.files.map((file) => file.path));
-      groups[release.releaseId] = [...release.files.map((file) => ({ ...file })), ...(groups[release.releaseId] ?? []).filter((file) => !known.has(file.path))];
+      const recorded = new Map((groups[release.releaseId] ?? []).map((file) => [file.path, file]));
+      groups[release.releaseId] = [...release.files.map((file) => ({ ...recorded.get(file.path), ...file })), ...(groups[release.releaseId] ?? []).filter((file) => !known.has(file.path))];
       if (groups.legacy) groups.legacy = groups.legacy.filter((file) => !known.has(file.path));
     }
     if (groups.legacy?.length === 0) delete groups.legacy;

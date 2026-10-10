@@ -275,11 +275,14 @@ export class UpdateService {
     try { zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false }); }
     catch { throw new Error(`Release ZIP is incomplete or corrupt (${archive.byteLength} bytes received). Retry the download or check the configured source.`); }
     const expected = new Set(release.files.filter((file) => file.change !== "-").map((file) => file.path));
-    const actual: string[] = []; let totalUncompressed = 0;
+    const actual: string[] = []; const folders: string[] = []; let totalUncompressed = 0;
     for (const entry of Object.values(zip.files)) {
       const entryName = entry.dir ? entry.name.replace(/\/$/, "") : entry.name;
       if (entryName && !(entry.dir && entryName === ".obsidian")) assertManagedPath(entryName);
-      if (entry.dir) continue;
+      if (entry.dir) {
+        if (expected.has(entryName)) folders.push(entryName);
+        continue;
+      }
       if (actual.length >= MAX_FILES) throw new Error("Release archive has too many files.");
       const path = assertManagedPath(entry.name);
       actual.push(path);
@@ -290,7 +293,10 @@ export class UpdateService {
     }
     if (new Set(actual).size !== actual.length) throw new Error("Release archive contains colliding paths.");
     ensureNoPathConflicts(actual);
-    const actualPaths = new Set(actual);
+    if (folders.some((folder) => actual.includes(folder))) throw new Error("Release archive contains a file and folder with the same path.");
+    // A folder may contain listed files, but a file cannot contain other entries.
+    for (const file of actual) if (folders.some((folder) => folder.startsWith(`${file}/`))) throw new Error(`File/directory path conflict: ${file}`);
+    const actualPaths = new Set([...actual, ...folders]);
     const missing = [...expected].filter((path) => !actualPaths.has(path));
     const unexpected = actual.filter((path) => !expected.has(path));
     if (missing.length || unexpected.length) {
@@ -298,7 +304,7 @@ export class UpdateService {
       const details = [missing.length ? `Missing files: ${describe(missing)}.` : "", unexpected.length ? `Unexpected files: ${describe(unexpected)}.` : ""].filter(Boolean).join(" ");
       throw new Error(`Release archive does not exactly match the manifest inventory for ${release.releaseId} (${release.filename}). ${details}`);
     }
-    return { manifest, release, writes: actual, deletions: release.deletions };
+    return { manifest, release, writes: actual, folders, deletions: release.deletions };
   }
 
   private async apply(plan: UpdatePlan, archive: ArrayBuffer, progress: (message: string) => void, confirmOverwrite: ConfirmOverwrite): Promise<void> {
@@ -318,6 +324,11 @@ export class UpdateService {
     const writes = plan.writes.filter((path) => !preserved.has(path));
     const deletionCandidates = [...new Set(plan.deletions)].filter((path) => !preserved.has(path));
     const deletions: string[] = [];
+    const folders = plan.folders ?? [];
+    for (const path of folders) {
+      await assertNoReparsePoints(this.app, path);
+      if (await adapter.exists(path) && (await adapter.stat(path))?.type !== "folder") throw new Error(`Refusing to replace a local file with a folder: ${path}`);
+    }
     for (const path of writes) {
       await assertNoReparsePoints(this.app, path);
       if (await adapter.exists(path)) {
@@ -353,7 +364,19 @@ export class UpdateService {
     const journalPath = `${transactionDir}/transaction.json`;
     await mkdirp(adapter, backupDir);
     const targets = [...new Set([...writes, ...deletions])];
-    const originals: Array<{ path: string; existed: boolean }> = [];
+    const originals: Array<{ path: string; existed: boolean; folder?: boolean }> = [];
+    // Journal newly created folder ancestors too, so failed installs remove only
+    // the empty directories they created, never existing folders or local content.
+    const newFolders = new Set<string>();
+    for (const path of folders) {
+      let current = "";
+      for (const segment of path.split("/")) {
+        current = current ? `${current}/${segment}` : segment;
+        if (!(await adapter.exists(current))) newFolders.add(current);
+        else if ((await adapter.stat(current))?.type !== "folder") throw new Error(`Folder path conflicts with a local file: ${current}`);
+      }
+    }
+    for (const path of [...newFolders].sort((a, b) => a.split("/").length - b.split("/").length)) originals.push({ path, existed: false, folder: true });
     for (const path of targets) {
       const existed = await adapter.exists(path); originals.push({ path, existed });
       if (existed) await writeBinary(adapter, `${backupDir}/${encodeURIComponent(path)}`, await adapter.readBinary(path));
@@ -362,6 +385,7 @@ export class UpdateService {
 
     try {
       const zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false });
+      for (const path of folders) { progress(`Creating folder ${path}…`); await mkdirp(adapter, path); }
       for (const path of deletions) if (await adapter.exists(path)) await adapter.remove(path);
       for (const path of writes) {
         progress(`Writing ${path}…`);
@@ -370,7 +394,7 @@ export class UpdateService {
         if (!entry) throw new Error(`Archive entry disappeared: ${path}`);
         await writeBinary(adapter, path, await entry.async("uint8array"));
       }
-      const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.filter((file) => !preserved.has(file.path)).map((file) => ({ ...file })) };
+      const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.filter((file) => !preserved.has(file.path)).map((file) => folders.includes(file.path) ? { ...file, type: "folder" as const } : { ...file }) };
       await this.saveData({ ...this.getData(), installed: {
         trackingVersion: 2,
         releaseVersion: plan.release.releaseVersion,
@@ -386,10 +410,13 @@ export class UpdateService {
     }
   }
 
-  private async rollback(adapter: DataAdapter, originals: Array<{ path: string; existed: boolean }>, backupDir: string): Promise<void> {
+  private async rollback(adapter: DataAdapter, originals: Array<{ path: string; existed: boolean; folder?: boolean }>, backupDir: string): Promise<void> {
     for (const original of originals.reverse()) {
       if (original.existed) await writeBinary(adapter, original.path, await adapter.readBinary(`${backupDir}/${encodeURIComponent(original.path)}`));
-      else if (await adapter.exists(original.path)) await adapter.remove(original.path);
+      else if (await adapter.exists(original.path)) {
+        if (original.folder) await adapter.rmdir(original.path, false);
+        else await adapter.remove(original.path);
+      }
     }
   }
 
