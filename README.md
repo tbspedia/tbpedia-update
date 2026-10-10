@@ -213,3 +213,7 @@ On mobile, manifest loading uses WebView fetch first and falls back to Obsidian 
 
 Version 1.2.1 includes bounded Android manifest requests with a fallback transport, shared concurrent requests, recent release metadata reuse, manual GitHub checks, incomplete-ZIP detection, and preservation of existing vault data.json defaults. Install or update through BRAT using repository `tbspedia/tbpedia-update` and the latest release. The release includes `main.js` and `manifest.json`. Reload the plugin after updating; Android device verification remains pending.
 
+
+### Plugin release 1.2.2
+
+Mobile update service calls and ZIP downloads use Obsidian requestUrl to bypass WebView CORS restrictions. This addresses the likely cause of Android Update failed: Failed to fetch after release information loads. Desktop downloads retain streaming. Mobile native downloads buffer the response before checking the archive size, so large packages depend on available device memory. Authentication, response status, declared download length, and ZIP validation remain enforced. Verify with node scripts/test-mobile-update.cjs. Android device verification remains pending.

@@ -239,6 +239,17 @@ export class UpdateService {
   }
 
   private async downloadPackage(source: Source, transaction: UpdateTransaction, filename: string): Promise<ArrayBuffer> {
+    if (Platform?.isMobile) {
+      const response = await requestUrl({ url: `${WORKER_URL}/updates/package`, method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders(transaction) },
+        body: JSON.stringify({ sourceId: source.sourceId, filename }), throw: false });
+      if (response.status !== 200) throw new Error(`Download failed from ${source.name} (HTTP ${response.status}).`);
+      const archive = response.arrayBuffer;
+      if (archive.byteLength > MAX_ARCHIVE_BYTES) throw new Error("Release archive exceeds the configured size limit.");
+      const declaredLength = Number(response.headers["content-length"] ?? response.headers["Content-Length"] ?? 0);
+      if (declaredLength > 0 && archive.byteLength !== declaredLength) throw new Error(`Incomplete ZIP from ${source.name}: received ${archive.byteLength} of ${declaredLength} bytes.`);
+      return archive;
+    }
     const response = await fetch(`${WORKER_URL}/updates/package`, {
       method: "POST", headers: { "Content-Type": "application/json", ...authHeaders(transaction) },
       body: JSON.stringify({ sourceId: source.sourceId, filename }),
@@ -380,6 +391,15 @@ export class UpdateService {
   }
 
   private async api(path: string, method: "GET" | "POST", body?: object, transaction?: UpdateTransaction): Promise<Record<string, unknown>> {
+    if (Platform?.isMobile) {
+      const response = await withManifestTimeout(Promise.resolve(requestUrl({ url: `${WORKER_URL}${path}`, method,
+        headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(transaction ? authHeaders(transaction) : {}) },
+        body: body ? JSON.stringify(body) : undefined, throw: false })));
+      let json: Record<string, unknown>;
+      try { json = response.json as Record<string, unknown>; } catch { throw new Error(`Update service returned invalid JSON for ${path}.`); }
+      if (response.status < 200 || response.status >= 300) throw new Error(typeof json.error === "string" ? json.error : `Update service request failed (HTTP ${response.status}).`);
+      return json;
+    }
     const response = await fetch(`${WORKER_URL}${path}`, { method, headers: { ...(body ? { "Content-Type": "application/json" } : {}), ...(transaction ? authHeaders(transaction) : {}) }, body: body ? JSON.stringify(body) : undefined });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(typeof json.error === "string" ? json.error : `Update service request failed (HTTP ${response.status}).`);

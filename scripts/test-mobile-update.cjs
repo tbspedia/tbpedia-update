@@ -1,0 +1,22 @@
+const assert=require('node:assert/strict');
+const {build}=require('esbuild');
+(async()=>{
+ const calls=[];let response={status:200,json:{id:'transaction',token:'token'},headers:{},arrayBuffer:new ArrayBuffer(8)};
+ const obsidian={Platform:{isMobile:true},requestUrl:async options=>{calls.push(options);return response;}};
+ const b=await build({entryPoints:['src/update-service.ts'],bundle:true,platform:'node',format:'cjs',external:['obsidian'],write:false});
+ const m={exports:{}};new Function('require','module','exports',b.outputFiles[0].text)(n=>n==='obsidian'?obsidian:require(n),m,m.exports);
+ global.fetch=()=>{throw Error('WebView fetch must not run');};
+ const service=new m.exports.UpdateService({},'1.2.2',()=>({}),async()=>{});
+ const transaction={id:'test',token:'test-token'};
+ assert.equal((await service.api('/updates/transactions','POST',{filename:'test.zip'})).id,'transaction');
+ await service.api('/updates/sources','GET',undefined,transaction);
+ assert.equal(calls.at(-1).headers.Authorization,'Bearer test-token');
+ await service.api('/updates/transactions/test/result','POST',{status:'failed'},transaction);
+ assert.equal((await service.downloadPackage({name:'Test',sourceId:'test'},transaction,'test.zip')).byteLength,8);
+ assert.equal(calls.at(-1).url,'https://cfupdate.tbpedia.org/updates/package');
+ response={...response,status:403,json:{error:'Transaction expired'}};
+ await assert.rejects(service.api('/updates/sources','GET',undefined,transaction),/Transaction expired/);
+ response={...response,status:200,headers:{'content-length':'100'}};
+ await assert.rejects(service.downloadPackage({name:'Test',sourceId:'test'},transaction,'test.zip'),/Incomplete ZIP/);
+ console.log('Passed mobile native API, authenticated requests, audit reporting, binary download and error checks.');
+})().catch(e=>{console.error(e);process.exitCode=1});
