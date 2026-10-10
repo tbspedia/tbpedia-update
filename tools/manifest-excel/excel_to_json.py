@@ -147,7 +147,7 @@ def validate_manifest(m):
     require(m['product'] == 'Tbpedia-Distribute' and m['plugin'] == 'tbpedia-update', 'unexpected product/plugin')
     require('collection' not in m, 'lowercase collection was renamed to tbpedia; uppercase Collection is unchanged')
     c = m.get('tbpedia')
-    require(isinstance(c, dict), 'tbpedia must be an object')
+    require(isinstance(c, dict), 'tbpedia must be the language/series/edition object; release manifest version uses uppercase Collection')
     for key, field in (('language', 'code'), ('series', 'id'), ('edition', 'id')):
         require(isinstance(c.get(key), dict), f'tbpedia.{key} must be an object')
         text(c[key].get(field), f'tbpedia.{key}.{field}')
@@ -160,6 +160,10 @@ def validate_manifest(m):
     require(len(roots) == len(set(roots)), 'duplicate managedRoots')
     releases = m.get('releases')
     require(isinstance(releases, list), 'releases must be a list')
+    if any(isinstance(r, dict) and 'dependsOn' in r for r in releases):
+        version = m['minimumPluginVersion']
+        require(bool(re.fullmatch(r'\d+\.\d+\.\d+', version)) and tuple(map(int, version.split('.'))) >= (1, 2, 0),
+                'dependsOn requires minimumPluginVersion 1.2.0 or newer')
     ids = set()
     prefix = f"{c['language']['code'].lower()}-{c['series']['id']}-{c['edition']['id']}-"
     for i, r in enumerate(releases):
@@ -169,6 +173,13 @@ def validate_manifest(m):
         for key in ('releaseVersion', 'releaseId', 'filename'):
             require(r[key].startswith(prefix), f'releases/{i}/{key} must start with {prefix}')
         require(r['releaseId'] not in ids, 'duplicate releaseId')
+        if 'dependsOn' in r:
+            dependencies = r['dependsOn']
+            require(isinstance(dependencies, list) and all(isinstance(d, str) and bool(d.strip()) for d in dependencies),
+                    f'releases/{i}/dependsOn must be a JSON array of release IDs')
+            require(len(dependencies) == len(set(dependencies)), f'releases/{i}/dependsOn contains duplicate IDs')
+            for dependency in dependencies:
+                require(dependency in ids, f'releases/{i}/dependsOn: {dependency} must identify an earlier release in this manifest')
         ids.add(r['releaseId'])
         require(re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z', r['publishedAt']) is not None,
                 'publishedAt must use YYYY-MM-DDTHH:MM:SSZ')
@@ -224,6 +235,16 @@ def convert(workbook, output, layout='tabs', selected=None, force=False):
                 raise ValueError(f'{name}, row {row}: {e}') from e
         try:
             manifest = build_manifest(entries)
+            # Always export explicit dependency metadata. Legacy workbooks retain
+            # sequential semantics instead of silently becoming independent.
+            earlier_ids = []
+            for release in manifest.get('releases', []):
+                release.setdefault('dependsOn', list(earlier_ids))
+                earlier_ids.append(release.get('releaseId'))
+            if any('dependsOn' in release for release in manifest.get('releases', [])):
+                version = str(manifest.get('minimumPluginVersion', ''))
+                if re.fullmatch(r'\d+\.\d+\.\d+', version) and tuple(map(int, version.split('.'))) < (1, 2, 0):
+                    manifest['minimumPluginVersion'] = '1.2.0'
             validate_manifest(manifest)
         except (ValueError, TypeError, KeyError) as e:
             raise ValueError(f'{name}: {e}') from e
@@ -251,7 +272,7 @@ def convert(workbook, output, layout='tabs', selected=None, force=False):
         target = output / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         temporary = target.with_suffix('.json.tmp')
-        temporary.write_text(json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + '\n', encoding='utf-8')
+        temporary.write_text(json.dumps(manifest, ensure_ascii=False, indent=2, allow_nan=False) + '\n', encoding='utf-8', newline='\n')
         temporary.replace(target)
         print(target)
     return exports
@@ -267,6 +288,13 @@ def main():
     args = parser.parse_args()
     try:
         exports = convert(args.workbook, args.output, args.layout, args.sheet, args.force)
+    except PermissionError as e:
+        blocked = Path(e.filename).resolve() if e.filename else None
+        if blocked == args.workbook.resolve():
+            print(f'ERROR: Cannot read workbook "{args.workbook}". Save and close this workbook in Excel, then run export_json.bat again. If it is still locked, exit Excel after saving and wait for OneDrive to finish syncing.', file=sys.stderr)
+        else:
+            print(f'ERROR: Cannot write or replace "{e.filename or args.output}". Close any program using the exported JSON files and check that the output folder is writable.', file=sys.stderr)
+        return 1
     except (OSError, ValueError, KeyError, ET.ParseError, zipfile.BadZipFile) as e:
         print(f'ERROR: {e}', file=sys.stderr)
         return 1

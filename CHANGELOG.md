@@ -2,6 +2,12 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.8 — 2026-10-10
+
+- Add editable dependsOn arrays to Excel release templates and generated release manifests, with minimum plugin version 1.2.0.
+- Validate explicit dependency IDs during Excel export; preserve sequential dependencies when older workbooks omit the field.
+- Update example exports and add regression tests for independent and dependent releases.
+
 ## 1.2.7 — 2026-10-10
 
 - Record each successfully installed release's download date in data.json under installed.downloadedAt.

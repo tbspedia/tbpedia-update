@@ -1,5 +1,7 @@
 # Excel manifest editor
 
+This workbook edits release manifests: `tbpedia` is the language/series/edition object and uppercase `Collection` is the version string. Plugin `data.json` is a separate format: there, `tbpedia` is the version string. Do not replace the manifest identity object with `"V1"`.
+
 Requires Windows with Python 3.10 or newer. No pip install is needed.
 
 1. Open `tbpedia-manifests.xlsx`, edit the yellow Value cells, then save.
@@ -25,6 +27,8 @@ py -3 .\excel_to_json.py --output .\repository-export --layout repository --shee
 ```
 
 ## Editing rows
+
+Every release has a `/releases/<index>/dependsOn` row with type `json`. Its default value is `[]`, meaning independent installation. To require specific earlier releases, enter a JSON array of IDs, for example `["zh-tw-reading-standard-2026-10-1.1"]`. Copy this row when adding a release. The exporter validates IDs, rejects duplicates and self/forward references, and writes `dependsOn` into each release in `latest.json`. It raises `minimumPluginVersion` to at least `1.2.0` for compatibility. If an older workbook omits the row, the exporter writes all earlier release IDs to preserve sequential behavior. Remove that requirement explicitly by entering `[]`.
 
 - Column A is a JSON Pointer, column B is its value, column C is its JSON type. Column D is guidance and is not exported.
 - Numbers use `integer` or `number`; identifiers and timestamps use `string`.
@@ -62,3 +66,7 @@ Source snapshot: 2026-10-08. The reading tabs use the actual repository manifest
 The workbook preserves schemaVersion 2 and all reference fields, nested objects, arrays, integer counts, empty deletion arrays and Traditional Chinese Unicode. The Python converter exports UTF-8 JSON with two-space indentation. It converts this workbook layout rather than arbitrary Excel workbooks and does not download newer source manifests or upload files to GitHub.
 
 The local manifest contract now uses `tbpedia` instead of lowercase `collection`. The source snapshots were migrated only by renaming that key. Rebuilt update plugins and migrated manifests must be published together.
+
+## Workbook locked by Excel
+
+Before running `export_json.bat`, save and close `tbpedia-manifests.xlsx` in Excel. Excel can block Python from reading an open workbook, producing Permission denied. If the lock remains, save and close all Excel windows and wait for OneDrive to finish syncing, then rerun the launcher. Do not delete or replace the workbook to fix a lock.

@@ -16,7 +16,7 @@
     }
   },
   "Collection": "V1",
-  "minimumPluginVersion": "1.1.0",
+  "minimumPluginVersion": "1.2.0",
   "minimumObsidianVersion": "1.6.0",
   "managedRoots": [
     "00 說明",
@@ -64,7 +64,8 @@
         "added": 2,
         "updated": 1,
         "removed": 0
-      }
+      },
+      "dependsOn": []
     }
   ]
 }

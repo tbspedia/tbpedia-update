@@ -2,12 +2,53 @@ import copy
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import excel_to_json as e
 
 FOLDER = Path(__file__).parent
 
 class ConverterTests(unittest.TestCase):
+    def test_dependency_validation(self):
+        m = json.loads((FOLDER / 'standard.source.json').read_text(encoding='utf-8'))
+        self.assertEqual(m['releases'][1]['dependsOn'], [])
+        m['releases'][1]['dependsOn'] = [m['releases'][0]['releaseId']]
+        e.validate_manifest(m)
+        for dependencies in (None, '[]', [m['releases'][1]['releaseId']], ['missing'], [m['releases'][0]['releaseId']] * 2):
+            bad = copy.deepcopy(m)
+            bad['releases'][1]['dependsOn'] = dependencies
+            with self.assertRaises(ValueError):
+                e.validate_manifest(bad)
+        bad = copy.deepcopy(m)
+        bad['minimumPluginVersion'] = '1.1.0'
+        with self.assertRaisesRegex(ValueError, '1.2.0'):
+            e.validate_manifest(bad)
+
+    def test_legacy_export_preserves_sequential_dependencies(self):
+        sheets = list(e.read_workbook(FOLDER / 'tbpedia-manifests.xlsx'))
+        name, cells = sheets[0]
+        cells = dict(cells)
+        for ref, value in list(cells.items()):
+            if ref.startswith('A') and isinstance(value, str) and value.endswith('/dependsOn'):
+                row = ref[1:]
+                for column in 'ABCD': cells.pop(column + row, None)
+        with tempfile.TemporaryDirectory() as output, patch.object(e, 'read_workbook', return_value=[(name, cells)]):
+            manifests = e.convert('legacy.xlsx', output)
+            manifest = next(iter(manifests.values()))
+            self.assertEqual(manifest['releases'][0]['dependsOn'], [])
+            self.assertEqual(manifest['releases'][1]['dependsOn'], [manifest['releases'][0]['releaseId']])
+
+    def test_explicit_dependency_export(self):
+        name, source = next(e.read_workbook(FOLDER / 'tbpedia-manifests.xlsx'))
+        cells = dict(source)
+        first_id = next(cells['B' + ref[1:]] for ref, value in cells.items() if ref.startswith('A') and value == '/releases/0/releaseId')
+        dependency_row = next(ref[1:] for ref, value in cells.items() if ref.startswith('A') and value == '/releases/1/dependsOn')
+        cells['B' + dependency_row] = json.dumps([first_id])
+        with tempfile.TemporaryDirectory() as output, patch.object(e, 'read_workbook', return_value=[(name, cells)]):
+            manifest = next(iter(e.convert('dependencies.xlsx', output).values()))
+            self.assertEqual(manifest['releases'][0]['dependsOn'], [])
+            self.assertEqual(manifest['releases'][1]['dependsOn'], [first_id])
+
     def test_all_eight_roundtrip(self):
         expected = json.loads((FOLDER / 'expected.json').read_text(encoding='utf-8'))
         with tempfile.TemporaryDirectory() as output:

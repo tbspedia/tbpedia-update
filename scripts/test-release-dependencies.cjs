@@ -47,7 +47,9 @@ async function load(file) {
   assert.deepEqual(selected(a, third.releaseId), [a, b, third.releaseId]);
   assert.throws(() => selected(), /Select at least/);
   assert.throws(() => selected('unknown'), /Unknown release/);
-  const sequential = parseAndValidateManifest(original);
+  const legacyManifest = structuredClone(original);
+  for (const release of legacyManifest.releases) delete release.dependsOn;
+  const sequential = parseAndValidateManifest(legacyManifest);
   assert.deepEqual(service.getSelectedBatch(sequential, new Set([b])).releases.map((release) => release.releaseId), [a, b]);
   const transitive = structuredClone(raw);
   transitive.releases[1].dependsOn = [a];
