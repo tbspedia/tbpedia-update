@@ -14,6 +14,8 @@ export type OverwriteDecision = "overwrite" | "overwrite-all" | "cancel";
 export type ConfirmOverwrite = (path: string) => Promise<OverwriteDecision>;
 
 export class UpdateService {
+  private manifestCache?: { key: string; value: ReleaseManifest; fetchedAt: number };
+  private manifestRequest?: { key: string; promise: Promise<ReleaseManifest> };
   constructor(
     private readonly app: App,
     private readonly pluginVersion: string,
@@ -22,7 +24,7 @@ export class UpdateService {
   ) {}
 
   async check(): Promise<UpdateBatch | null> {
-    const manifest = await this.getReleaseManifest();
+    const manifest = await this.getReleaseManifest(true);
     this.assertCompatible(manifest);
     const data = this.getData();
     await this.saveData({ ...data, seriesId: manifest.tbpedia.series.id, editionId: manifest.tbpedia.edition.id,
@@ -31,11 +33,25 @@ export class UpdateService {
     return releases.length ? { manifest, releases } : null;
   }
 
-  async getReleaseManifest(): Promise<ReleaseManifest> {
+  async getReleaseManifest(forceRefresh = false): Promise<ReleaseManifest> {
     const language = this.getData().languageCode;
     if (!language) throw new Error("This vault’s Tbpedia collection language is missing. Configure languageCode in the plugin’s data.json first.");
     const edition = this.getData().editionId;
-    const manifest = await this.fetchManifest(language, this.getData().seriesId, edition, this.getData().tbpedia);
+    const data = this.getData();
+    const key = JSON.stringify([language, data.seriesId, edition, data.tbpedia]);
+    if (this.manifestRequest?.key === key) return this.manifestRequest.promise;
+    if (!forceRefresh && this.manifestCache?.key === key && Date.now() - this.manifestCache.fetchedAt < 60_000) {
+      return this.manifestCache.value;
+    }
+    const promise = this.fetchManifest(language, data.seriesId, edition, data.tbpedia).then((manifest) => {
+      this.assertSelectedCollection(manifest);
+      this.manifestCache = { key, value: manifest, fetchedAt: Date.now() };
+      return manifest;
+    });
+    this.manifestRequest = { key, promise };
+    let manifest: ReleaseManifest;
+    try { manifest = await promise; }
+    finally { if (this.manifestRequest?.promise === promise) this.manifestRequest = undefined; }
     this.assertSelectedCollection(manifest);
     return manifest;
   }
@@ -152,7 +168,21 @@ export class UpdateService {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(series)) throw new Error("The configured Tbpedia series ID is invalid.");
     if (edition !== "standard" && edition !== "advanced") throw new Error("Choose a supported Tbpedia edition in the plugin settings.");
     if (!/^V[1-9]\d*$/.test(collection)) throw new Error("The configured tbpedia version must be a version such as V1.");
-    const response = await requestUrl({ url: `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}/${edition}/${collection}/latest.json?check=${crypto.randomUUID()}`, method: "GET", headers: { "Cache-Control": "no-cache" }, throw: false });
+    const url = `${MANIFEST_BASE_URL}/${language.toLowerCase()}/${series}/${edition}/${collection}/latest.json?check=${crypto.randomUUID()}`;
+    const nativeRequest = () => withManifestTimeout(Promise.resolve(requestUrl({ url, method: "GET", headers: { "Cache-Control": "no-cache" }, throw: false })));
+    let response: { status: number; json: unknown };
+    if (Platform?.isMobile) {
+      const controller = new AbortController();
+      try {
+        response = await withManifestTimeout((async () => {
+          const result = await fetch(url, { signal: controller.signal });
+          return { status: result.status, json: result.status === 200 ? await result.json() : null };
+        })());
+      } catch {
+        controller.abort();
+        response = await nativeRequest();
+      } finally { controller.abort(); }
+    } else response = await nativeRequest();
     if (response.status !== 200) throw new Error(`Could not retrieve release metadata (HTTP ${response.status}).`);
     let json: unknown;
     try { json = response.json; } catch { throw new Error("Release metadata is not valid JSON."); }
@@ -398,4 +428,13 @@ async function assertNoReparsePoints(app: App, vaultPath: string): Promise<void>
       if ((error as { code?: string }).code !== "ENOENT") throw error;
     }
   }
+}
+
+async function withManifestTimeout<T>(request: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([request, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("GitHub release request timed out. Check your connection and tap Refresh to retry.")), 12_000);
+    })]);
+  } finally { if (timer !== undefined) clearTimeout(timer); }
 }

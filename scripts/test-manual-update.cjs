@@ -5,7 +5,7 @@ const { build } = require('esbuild');
   const requests = [], notices = [];
   let opened = 0;
   const manifest = JSON.parse(fs.readFileSync('manifests/zh-tw/reading/standard/V1/latest.json', 'utf8'));
-  const obsidian = {
+  const obsidian = { Platform: { isMobile: false },
     Plugin: class { async saveData() {} }, PluginSettingTab: class {}, Setting: class {},
     Modal: class { open() { opened++; } }, Notice: class { constructor(text) { notices.push(text); } },
     requestUrl: async options => { requests.push(options); return { status: 200, json: manifest }; }
@@ -19,14 +19,37 @@ const { build } = require('esbuild');
   const { UpdateService } = await load('src/update-service.ts');
   const data = { languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', tbpedia: 'V1' };
   const service = new UpdateService({}, '1.2.0', () => data, async () => {});
-  await service.getReleaseManifest();
-  await service.getReleaseManifest();
+  await service.getReleaseManifest(true);
+  await service.getReleaseManifest(true);
   assert.equal(requests.length, 2);
   assert.notEqual(requests[0].url, requests[1].url);
   for (const request of requests) {
     assert.equal(new URL(request.url).hostname, 'raw.githubusercontent.com');
     assert.equal(request.headers['Cache-Control'], 'no-cache');
   }
+  await service.getReleaseManifest();
+  assert.equal(requests.length, 2, 'Opening the release tab reuses the recent check');
+  await Promise.all([service.getReleaseManifest(true), service.getReleaseManifest(true)]);
+  assert.equal(requests.length, 3, 'Concurrent refreshes share one request');
+  await service.getReleaseManifest(true);
+  assert.equal(requests.length, 4, 'Explicit refresh still fetches fresh metadata');
+  obsidian.Platform.isMobile = true;
+  global.fetch = async () => new Response(JSON.stringify(manifest));
+  const mobile = new UpdateService({}, '1.2.0', () => data, async () => {});
+  await mobile.getReleaseManifest(true);
+  assert.equal(requests.length, 4, 'Mobile uses fetch instead of native requestUrl');
+  global.fetch = async () => { throw new Error('WebView network blocked'); };
+  await mobile.getReleaseManifest(true);
+  assert.equal(requests.length, 5, 'Mobile falls back to native requests');
+  const originalTimer = global.setTimeout;
+  global.setTimeout = (callback) => originalTimer(callback, 5);
+  obsidian.requestUrl = () => new Promise(() => {});
+  global.fetch = () => new Promise(() => {});
+  try { await assert.rejects(mobile.getReleaseManifest(true), /timed out/); }
+  finally { global.setTimeout = originalTimer; }
+  global.fetch = async () => new Response(JSON.stringify(manifest));
+  await mobile.getReleaseManifest(true);
+  obsidian.Platform.isMobile = false;
   const { default: Plugin } = await load('src/main.ts');
   const plugin = new Plugin();
   const latest = manifest.releases.at(-1);

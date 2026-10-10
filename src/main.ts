@@ -51,7 +51,7 @@ export default class TbpediaUpdatePlugin extends Plugin {
     if (this.installing) throw new Error("A Tbpedia update is already in progress.");
     this.installing = true;
     try {
-      const current = await this.updater.getReleaseManifest();
+      const current = await this.updater.getReleaseManifest(true);
       if (JSON.stringify(current) !== JSON.stringify(batch.manifest)) throw new Error("Release information has changed. Refresh and select releases again.");
       const selected = this.updater.getSelectedBatch(current, new Set(batch.releases.map((release) => release.releaseId)));
       await this.updater.install(selected, progress,
@@ -68,7 +68,7 @@ export default class TbpediaUpdatePlugin extends Plugin {
     await this.persistData({ ...this.data, checkForUpdatesOnStartup });
   }
 
-  getReleaseManifest(): Promise<ReleaseManifest> { return this.updater.getReleaseManifest(); }
+  getReleaseManifest(forceRefresh = false): Promise<ReleaseManifest> { return this.updater.getReleaseManifest(forceRefresh); }
   isReleaseInstalled(release: ReleaseEntry, manifest: ReleaseManifest): boolean { return this.updater.isReleaseInstalled(release, manifest); }
 
   private async persistData(data: PluginData): Promise<void> {
@@ -87,7 +87,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
   private renderId = 0;
   constructor(app: App, private readonly plugin: TbpediaUpdatePlugin) { super(app, plugin); }
   selectReleases(): void { this.activeTab = "releases"; }
-  display(): void {
+  display(forceRefresh = false): void {
     const { containerEl } = this;
     containerEl.empty();
     const renderId = ++this.renderId;
@@ -111,7 +111,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
     panel.setAttribute("role", "tabpanel");
     panel.setAttribute("aria-labelledby", `tbpedia-tab-${this.activeTab}`);
     if (this.activeTab === "releases") {
-      void this.displayReleases(panel, renderId);
+      void this.displayReleases(panel, renderId, forceRefresh);
       return;
     }
     new Setting(panel)
@@ -134,16 +134,16 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
 
   hide(): void { this.renderId++; }
 
-  private async displayReleases(panel: HTMLElement, renderId: number): Promise<void> {
+  private async displayReleases(panel: HTMLElement, renderId: number, forceRefresh: boolean): Promise<void> {
     new Setting(panel)
       .setName("Release information")
       .setDesc("Releases for this vault’s configured collection. Downloaded status indicates a completed installation recorded by the plugin.")
-      .addButton((button) => button.setButtonText("Refresh").onClick(() => this.display()));
+      .addButton((button) => button.setButtonText("Refresh").onClick(() => this.display(true)));
     const content = panel.createDiv();
     content.setAttribute("aria-live", "polite");
     content.createEl("p", { text: "Loading release information…" });
     try {
-      const manifest = await this.plugin.getReleaseManifest();
+      const manifest = await this.plugin.getReleaseManifest(forceRefresh);
       if (renderId !== this.renderId) return;
       content.empty();
       content.createEl("h3", { text: manifest.title });
