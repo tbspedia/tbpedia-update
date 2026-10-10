@@ -2,6 +2,11 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.6 — 2026-10-10
+
+- Let My Download release and file-detail tables use natural column widths with horizontal scrolling.
+- Keep table content on one line and make scroll regions keyboard accessible.
+
 ## 1.2.5 — 2026-10-10
 
 - Display the saved collection Title before Language in My Download.
