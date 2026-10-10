@@ -115,7 +115,7 @@ When the release is installed, the plugin deletes the listed file if either:
 
 The second rule supports files shipped with the base collection before ownership tracking. It also applies to locally created notes: any existing Markdown note in a managed collection folder can be deleted when its exact path is listed. The plugin does not use a separate base-file inventory or `baseRelease` metadata to identify those files, and does not request individual deletion approval.
 
-Folders are always refused. Untracked non-Markdown files and untracked files outside the collection folders remain protected. Path validation and symlink/reparse-point checks still apply. A tracked file that is already absent is skipped; an absent untracked path fails the ownership check.
+Folders are always refused. Untracked non-Markdown files and untracked files outside the collection folders remain protected. Path validation and symlink/reparse-point checks still apply. Starting with plugin 1.2.3, a deletion target that is already absent is skipped whether or not it appears in installed.ownedFiles. The plugin reports Information: skipping deletion; file is already absent: <path> and continues installing the release. Missing targets are excluded from the deletion transaction and backups. Ownership checks apply only to targets that exist.
 
 Do not include deleted files in the ZIP or mark the same path as added or modified. A matching `{ "path": "01 文集部/測試更新-2026-11-1.md", "change": "-" }` entry in `files` is allowed; the parser adds it automatically when only `deletions` lists the path. Include the removal in `releaseNotes.removed`.
 
@@ -207,11 +207,11 @@ A “can't find end of central directory” error can mean the download was trun
 
 Opening or redrawing Release information reuses a validated manifest fetched within the last 60 seconds for the same language, series, edition, and collection version. Concurrent requests for that collection share one network request. This avoids fetching the same GitHub metadata again immediately after an update check or tab redraw. Manual **Check Tbpedia updates**, **Refresh**, and the pre-install manifest check request fresh metadata; an already-running request is shared. Cache entries are kept only in memory, and failed requests can be retried. Initial loading still depends on the device's connection to GitHub. Android device timing has not been measured; this change addresses duplicate requests confirmed in the code.
 
-On mobile, manifest loading uses WebView fetch first and falls back to Obsidian requestUrl on network failure or timeout. Each attempt is limited to 12 seconds, including response parsing. If both attempts fail, Release information displays an error and Refresh can retry. The native requestUrl API has no cancellation option, so a timed-out native request may finish in the background, but it cannot keep the page waiting indefinitely. Mobile transport, fallback, timeout, and recovery are covered by the mocked request regression tests; verification on the affected Android device remains pending.
+On mobile, manifest loading uses WebView fetch first and falls back to Obsidian requestUrl on network failure or timeout. Each attempt is limited to 12 seconds, including response parsing. If both attempts fail, Release information displays an error and Refresh can retry. The native requestUrl API has no cancellation option, so a timed-out native request may finish in the background, but it cannot keep the page waiting indefinitely. Mobile transport, fallback, timeout, and recovery are covered by the mocked request regression tests; The user confirmed that Android Release information loads successfully after the 1.2.1 update.
 
 ### Plugin release 1.2.1
 
-Version 1.2.1 includes bounded Android manifest requests with a fallback transport, shared concurrent requests, recent release metadata reuse, manual GitHub checks, incomplete-ZIP detection, and preservation of existing vault data.json defaults. Install or update through BRAT using repository `tbspedia/tbpedia-update` and the latest release. The release includes `main.js` and `manifest.json`. Reload the plugin after updating; Android device verification remains pending.
+Version 1.2.1 includes bounded Android manifest requests with a fallback transport, shared concurrent requests, recent release metadata reuse, manual GitHub checks, incomplete-ZIP detection, and preservation of existing vault data.json defaults. Install or update through BRAT using repository `tbspedia/tbpedia-update` and the latest release. The release includes `main.js` and `manifest.json`. Reload the plugin after updating. The user confirmed that Release information now loads on Android.
 
 
 ### Plugin release 1.2.2
@@ -221,3 +221,12 @@ Mobile update service calls and ZIP downloads use Obsidian requestUrl to bypass 
 ### Plugin release 1.2.3
 
 Deletion targets already absent from the vault are skipped with an informational progress message, and the update continues. Missing paths are excluded from deletion transactions and backups. Existing file ownership, folder protection, and preservation of existing data.json files still apply.
+
+### Updating through BRAT
+
+1. Open BRAT settings and add `tbspedia/tbpedia-update` if it is not already registered.
+2. Check for plugin updates and install version **1.2.3** or newer. If the repository is pinned to an older release, select the latest release.
+3. Reload True Buddha Pedia Update or restart Obsidian. Confirm the installed plugin version is 1.2.3 or newer.
+4. Open **Release information**, select the pending content release, and retry the update.
+
+A missing deletion target is informational and does not prevent completion. For example, if `00 說明/搜索 (search) 9.md` is listed for deletion but is not present, it is skipped and the remaining changes proceed. Existing unowned files outside the permitted collection-note deletion rules can still stop an update. Plugin releases attach `main.js` and `manifest.json`; the vault's existing `data.json` is preserved.
