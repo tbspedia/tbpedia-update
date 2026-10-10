@@ -51,6 +51,7 @@ export interface InstalledState {
 }
 
 export interface PluginData {
+  title?: string;
   checkForUpdatesOnStartup: boolean;
   languageCode?: SupportedLanguage | "";
   interfaceLanguage?: SupportedLanguage;

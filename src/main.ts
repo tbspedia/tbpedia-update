@@ -144,6 +144,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
     metadata.style.gridTemplateColumns = "max-content 1fr";
     metadata.style.gap = "8px 16px";
     for (const [label, value] of [
+      ["Title", data.title || "Not configured"],
       ["Language", data.languageCode || "Not configured"], ["Series", data.seriesId || "Not configured"],
       ["Edition", data.editionId || "Not configured"], ["Collection", data.tbpedia],
       ["Base release", data.baseRelease?.releaseVersion ?? data.baseRelease?.releaseId ?? "Not recorded"],
@@ -170,7 +171,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       for (const label of headers) head.createEl("th", { text: label }).setAttribute("scope", "col");
       return table.createEl("tbody");
     };
-    const body = makeTable(panel, "Recorded releases (most recently applied first)", ["Release ID", "Status", "Downloaded files", "Added", "Updated", "Removed", "File details"]);
+    const body = makeTable(panel, "Recorded releases (most recently applied first)", ["Release ID", "Status", "File details", "Downloaded files", "Added", "Updated", "Removed"]);
     for (const id of ids) {
       const files = installed.ownedFiles[id] ?? [];
       const recorded = Object.prototype.hasOwnProperty.call(installed.ownedFiles, id);
@@ -182,6 +183,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       for (const value of [id, completed ? "Installed" : "File records only", recorded ? String(added + updated) : "Not recorded",
         recorded ? String(added) : "—", recorded ? String(updated) : "—", recorded ? String(removed) : "—"]) row.createEl("td", { text: value });
       const cell = row.createEl("td");
+      row.insertBefore(cell, row.children[2]);
       if (!files.length) { cell.setText(recorded ? "No file changes recorded" : "File details were not saved for this release"); continue; }
       const details = cell.createEl("details");
       details.createEl("summary", { text: "View " + files.length + " file changes" });
