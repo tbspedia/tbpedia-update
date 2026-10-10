@@ -2,6 +2,12 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.4 — 2026-10-10
+
+- Add the offline My Download settings tab using saved data.json release and file history.
+- Show installed status, downloaded-file counts, added/updated/removed totals, and expandable file details.
+- Load file tables on expansion and explain missing historical records.
+
 ## Unreleased
 
 - Allow explicit release deletions to remove existing Markdown files inside approved collection folders even when they are missing from `installed.ownedFiles`, including base collection files and locally created notes whose paths are listed.

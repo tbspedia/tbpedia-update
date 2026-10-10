@@ -77,13 +77,15 @@ export default class TbpediaUpdatePlugin extends Plugin {
     await this.saveData(this.data);
   }
 
+  get downloadData(): PluginData { return this.data; }
+
   get interfaceLanguage(): PluginData["interfaceLanguage"] { return this.data.interfaceLanguage ?? (this.data.languageCode || undefined); }
   get checkForUpdatesOnStartup(): boolean { return this.data.checkForUpdatesOnStartup; }
   get baseRelease(): NonNullable<PluginData["baseRelease"]> { return this.data.baseRelease ?? {}; }
 }
 
 class TbpediaUpdateSettingsTab extends PluginSettingTab {
-  private activeTab: "settings" | "releases" = "settings";
+  private activeTab: "settings" | "releases" | "downloads" = "settings";
   private renderId = 0;
   constructor(app: App, private readonly plugin: TbpediaUpdatePlugin) { super(app, plugin); }
   selectReleases(): void { this.activeTab = "releases"; }
@@ -97,7 +99,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
     tabs.style.display = "flex";
     tabs.style.gap = "8px";
     tabs.style.marginBottom = "16px";
-    for (const [id, label] of [["settings", "Settings"], ["releases", "Release information"]] as const) {
+    for (const [id, label] of [["settings", "Settings"], ["releases", "Release information"], ["downloads", "My Download"]] as const) {
       const button = tabs.createEl("button", { text: label });
       button.setAttribute("role", "tab");
       button.setAttribute("aria-selected", String(this.activeTab === id));
@@ -114,6 +116,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       void this.displayReleases(panel, renderId, forceRefresh);
       return;
     }
+    if (this.activeTab === "downloads") { this.displayDownloads(panel); return; }
     new Setting(panel)
       .setName("Interface language")
       .setDesc("Select your preferred interface language. Content updates use the collection language configured in data.json.")
@@ -130,6 +133,82 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
         toggle.setValue(this.plugin.checkForUpdatesOnStartup);
         toggle.onChange(async (value) => { await this.plugin.setCheckForUpdatesOnStartup(value); });
       });
+  }
+
+  private displayDownloads(panel: HTMLElement): void {
+    panel.createEl("h3", { text: "My Download" });
+    panel.createEl("p", { text: "Your locally recorded releases and file changes from the plugin’s data.json. Removed files are changes, not downloads. File lists reflect recorded changes, not the current contents of your vault." });
+    const data = this.plugin.downloadData;
+    const metadata = panel.createEl("dl");
+    metadata.style.display = "grid";
+    metadata.style.gridTemplateColumns = "max-content 1fr";
+    metadata.style.gap = "8px 16px";
+    for (const [label, value] of [
+      ["Language", data.languageCode || "Not configured"], ["Series", data.seriesId || "Not configured"],
+      ["Edition", data.editionId || "Not configured"], ["Collection", data.tbpedia],
+      ["Base release", data.baseRelease?.releaseVersion ?? data.baseRelease?.releaseId ?? "Not recorded"],
+      ["Latest installed release", data.installed.releaseVersion ?? data.installed.releaseId ?? "Not recorded"],
+    ]) {
+      metadata.createEl("dt", { text: label });
+      metadata.createEl("dd", { text: value }).style.margin = "0";
+    }
+    const installed = data.installed;
+    const ids = [...new Set([...Object.keys(installed.ownedFiles), ...installed.appliedReleaseIds,
+      ...(installed.releaseId ? [installed.releaseId] : [])])].reverse();
+    if (!ids.length) {
+      panel.createEl("p", { text: "No downloaded releases recorded yet. Open Release information to download your first update. The base collection may have been installed separately." });
+      return;
+    }
+    const makeTable = (parent: HTMLElement, caption: string, headers: string[]): HTMLTableSectionElement => {
+      const wrapper = parent.createDiv();
+      wrapper.style.overflowX = "auto";
+      const table = wrapper.createEl("table");
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.createEl("caption", { text: caption });
+      const head = table.createEl("thead").createEl("tr");
+      for (const label of headers) head.createEl("th", { text: label }).setAttribute("scope", "col");
+      return table.createEl("tbody");
+    };
+    const body = makeTable(panel, "Recorded releases (most recently applied first)", ["Release ID", "Status", "Downloaded files", "Added", "Updated", "Removed", "File details"]);
+    for (const id of ids) {
+      const files = installed.ownedFiles[id] ?? [];
+      const recorded = Object.prototype.hasOwnProperty.call(installed.ownedFiles, id);
+      const completed = installed.appliedReleaseIds.includes(id) || installed.releaseId === id;
+      const added = files.filter(file => file.change === "+").length;
+      const updated = files.filter(file => file.change === "~").length;
+      const removed = files.filter(file => file.change === "-").length;
+      const row = body.createEl("tr");
+      for (const value of [id, completed ? "Installed" : "File records only", recorded ? String(added + updated) : "Not recorded",
+        recorded ? String(added) : "—", recorded ? String(updated) : "—", recorded ? String(removed) : "—"]) row.createEl("td", { text: value });
+      const cell = row.createEl("td");
+      if (!files.length) { cell.setText(recorded ? "No file changes recorded" : "File details were not saved for this release"); continue; }
+      const details = cell.createEl("details");
+      details.createEl("summary", { text: "View " + files.length + " file changes" });
+      details.addEventListener("toggle", () => {
+        if (!details.open || details.querySelector("table")) return;
+        const fileBody = makeTable(details, "Files for " + id, ["File name", "Folder", "Change"]);
+        for (const file of files) {
+          const fileRow = fileBody.createEl("tr");
+          const split = file.path.lastIndexOf("/");
+          const name = fileRow.createEl("td", { text: file.path.slice(split + 1) });
+          name.title = file.path;
+          fileRow.createEl("td", { text: split < 0 ? "Vault root" : file.path.slice(0, split) }).style.overflowWrap = "anywhere";
+          fileRow.createEl("td", { text: file.change === "+" ? "Added" : file.change === "~" ? "Updated" : "Removed" });
+        }
+        styleCells(details);
+      });
+    }
+    function styleCells(root: HTMLElement): void {
+      for (const cell of Array.from(root.querySelectorAll<HTMLElement>("th, td"))) {
+        cell.style.padding = "10px";
+        cell.style.textAlign = "left";
+        cell.style.verticalAlign = "top";
+        cell.style.borderBottom = "1px solid var(--background-modifier-border)";
+        cell.style.overflowWrap = "anywhere";
+      }
+    }
+    styleCells(panel);
   }
 
   hide(): void { this.renderId++; }
