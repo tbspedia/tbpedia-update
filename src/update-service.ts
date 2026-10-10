@@ -316,7 +316,8 @@ export class UpdateService {
       }
     }
     const writes = plan.writes.filter((path) => !preserved.has(path));
-    const deletions = [...new Set(plan.deletions)].filter((path) => !preserved.has(path));
+    const deletionCandidates = [...new Set(plan.deletions)].filter((path) => !preserved.has(path));
+    const deletions: string[] = [];
     for (const path of writes) {
       await assertNoReparsePoints(this.app, path);
       if (await adapter.exists(path)) {
@@ -327,11 +328,15 @@ export class UpdateService {
         }
       }
     }
-    for (const path of deletions) {
+    for (const path of deletionCandidates) {
       await assertNoReparsePoints(this.app, path);
       const managedPath = assertManagedPath(path);
       const exists = await adapter.exists(managedPath);
-      if (exists && (await adapter.stat(managedPath))?.type === "folder") {
+      if (!exists) {
+        progress(`Information: skipping deletion; file is already absent: ${managedPath}`);
+        continue;
+      }
+      if ((await adapter.stat(managedPath))?.type === "folder") {
         throw new Error(`Refusing to delete a local folder: ${managedPath}`);
       }
       // Explicit deletions also cover collection notes predating ownership tracking.
@@ -340,6 +345,7 @@ export class UpdateService {
       if (!owned.has(path) && !isUntrackedCollectionNote) {
         throw new Error(`Refusing to delete a file not owned by the prior release: ${path}`);
       }
+      deletions.push(managedPath);
     }
 
     const transactionDir = `${STAGING_DIR}/${crypto.randomUUID()}`;

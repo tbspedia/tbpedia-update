@@ -217,3 +217,7 @@ Version 1.2.1 includes bounded Android manifest requests with a fallback transpo
 ### Plugin release 1.2.2
 
 Mobile update service calls and ZIP downloads use Obsidian requestUrl to bypass WebView CORS restrictions. This addresses the likely cause of Android Update failed: Failed to fetch after release information loads. Desktop downloads retain streaming. Mobile native downloads buffer the response before checking the archive size, so large packages depend on available device memory. Authentication, response status, declared download length, and ZIP validation remain enforced. Verify with node scripts/test-mobile-update.cjs. Android device verification remains pending.
+
+### Plugin release 1.2.3
+
+Deletion targets already absent from the vault are skipped with an informational progress message, and the update continues. Missing paths are excluded from deletion transactions and backups. Existing file ownership, folder protection, and preservation of existing data.json files still apply.
