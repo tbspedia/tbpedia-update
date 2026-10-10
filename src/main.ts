@@ -163,8 +163,14 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
     const makeTable = (parent: HTMLElement, caption: string, headers: string[]): HTMLTableSectionElement => {
       const wrapper = parent.createDiv();
       wrapper.style.overflowX = "auto";
+      wrapper.style.maxWidth = "100%";
+      wrapper.tabIndex = 0;
+      wrapper.setAttribute("role", "region");
+      wrapper.setAttribute("aria-label", caption + " — scroll horizontally to view all columns");
       const table = wrapper.createEl("table");
-      table.style.width = "100%";
+      table.style.width = "max-content";
+      table.style.tableLayout = "auto";
+      table.style.whiteSpace = "nowrap";
       table.style.borderCollapse = "collapse";
       table.createEl("caption", { text: caption });
       const head = table.createEl("thead").createEl("tr");
