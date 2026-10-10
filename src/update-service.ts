@@ -100,6 +100,7 @@ export class UpdateService {
         try {
           progress(`Downloading from ${source.name}…`);
           archive = await this.downloadPackage(source, transaction, release.filename);
+          await this.validateArchive(archive, manifest, release);
           break;
         } catch (error) { lastError = error; }
       }
@@ -213,6 +214,7 @@ export class UpdateService {
       body: JSON.stringify({ sourceId: source.sourceId, filename }),
     });
     if (!response.ok || !response.body) throw new Error(`Download failed from ${source.name} (HTTP ${response.status}).`);
+    const declaredLength = Number(response.headers.get("Content-Length") ?? 0);
     const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let total = 0;
     while (true) {
       const { value, done } = await reader.read();
@@ -223,11 +225,14 @@ export class UpdateService {
     }
     const archive = new Uint8Array(total); let offset = 0;
     for (const chunk of chunks) { archive.set(chunk, offset); offset += chunk.byteLength; }
+    if (declaredLength > 0 && total !== declaredLength) throw new Error(`Incomplete ZIP from ${source.name}: received ${total} of ${declaredLength} bytes.`);
     return archive.buffer;
   }
 
   private async validateArchive(archive: ArrayBuffer, manifest: ReleaseManifest, release: ReleaseEntry): Promise<UpdatePlan> {
-    const zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false });
+    let zip: JSZip;
+    try { zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false }); }
+    catch { throw new Error(`Release ZIP is incomplete or corrupt (${archive.byteLength} bytes received). Retry the download or check the configured source.`); }
     const expected = new Set(release.files.filter((file) => file.change !== "-").map((file) => file.path));
     const actual: string[] = []; let totalUncompressed = 0;
     for (const entry of Object.values(zip.files)) {

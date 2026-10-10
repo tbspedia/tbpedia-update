@@ -130,7 +130,9 @@ async function streamPackage(request: Request, env: Env): Promise<Response> {
   const headers = new Headers({ "Content-Type": "application/zip", "Content-Disposition": `attachment; filename="${safeFilename(body.filename)}"`, "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" });
   if (upstream.headers.has("content-length")) headers.set("Content-Length", upstream.headers.get("content-length")!);
   console.log(JSON.stringify({ transactionId: claims.id, sourceId: body.sourceId, stream: "started" }));
-  return new Response(limitStream(upstream.body, 1024 * 1024 * 1024), { status: 200, headers });
+  // Forward natively: a JavaScript transform per chunk exhausts Worker CPU on large ZIPs.
+  // Declared size is checked above; the plugin also enforces the size limit while reading.
+  return new Response(upstream.body, { status: 200, headers });
 }
 
 async function reportResult(request: Request, env: Env, transactionId: string): Promise<Response> {
@@ -289,9 +291,5 @@ async function readProbeBytes(body: ReadableStream<Uint8Array>): Promise<Uint8Ar
   const bytes = new Uint8Array(total); let offset = 0;
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
   return bytes;
-}
-function limitStream(body: ReadableStream<Uint8Array>, maximum: number): ReadableStream<Uint8Array> {
-  let total = 0;
-  return body.pipeThrough(new TransformStream({ transform(chunk, controller) { total += chunk.byteLength; if (total > maximum) { controller.error(new Error("Source response exceeded the service size limit.")); return; } controller.enqueue(chunk); } }));
 }
 class HttpError extends Error { constructor(readonly status: number, message: string) { super(message); } }
