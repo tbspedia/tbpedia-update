@@ -1,7 +1,7 @@
 {
   "id": "tbpedia-update",
   "name": "True Buddha Pedia Update",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "minAppVersion": "1.6.0",
   "description": "Safely installs approved Tbpedia content releases.",
   "author": "真佛百科",

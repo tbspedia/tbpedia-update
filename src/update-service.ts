@@ -377,6 +377,7 @@ export class UpdateService {
         releaseId: plan.release.releaseId,
         appliedReleaseIds: [...new Set([...(previous.appliedReleaseIds ?? []), plan.release.releaseId])],
         ownedFiles: nextOwned,
+        downloadedAt: { ...previous.downloadedAt, [plan.release.releaseId]: new Date().toISOString() },
       } });
       await removeTree(adapter, transactionDir);
     } catch (error) {

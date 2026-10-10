@@ -2,6 +2,11 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.7 — 2026-10-10
+
+- Record each successfully installed release's download date in data.json under installed.downloadedAt.
+- Display local download dates in My Download; show Not recorded for historical releases without saved dates.
+
 ## 1.2.6 — 2026-10-10
 
 - Let My Download release and file-detail tables use natural column widths with horizontal scrolling.

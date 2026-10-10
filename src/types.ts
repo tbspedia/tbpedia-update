@@ -48,6 +48,8 @@ export interface InstalledState {
   releaseId?: string;
   appliedReleaseIds: string[];
   ownedFiles: Record<string, FileChange[]>;
+  /** UTC ISO timestamps recorded after each release installs successfully. */
+  downloadedAt?: Record<string, string>;
 }
 
 export interface PluginData {

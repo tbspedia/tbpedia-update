@@ -177,7 +177,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       for (const label of headers) head.createEl("th", { text: label }).setAttribute("scope", "col");
       return table.createEl("tbody");
     };
-    const body = makeTable(panel, "Recorded releases (most recently applied first)", ["Release ID", "Status", "File details", "Downloaded files", "Added", "Updated", "Removed"]);
+    const body = makeTable(panel, "Recorded releases (most recently applied first)", ["Release ID", "Status", "Download date", "File details", "Downloaded files", "Added", "Updated", "Removed"]);
     for (const id of ids) {
       const files = installed.ownedFiles[id] ?? [];
       const recorded = Object.prototype.hasOwnProperty.call(installed.ownedFiles, id);
@@ -185,11 +185,15 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
       const added = files.filter(file => file.change === "+").length;
       const updated = files.filter(file => file.change === "~").length;
       const removed = files.filter(file => file.change === "-").length;
+      const timestamp = installed.downloadedAt?.[id];
+      const downloadedAt = timestamp ? new Date(timestamp) : undefined;
+      const downloadDate = downloadedAt && Number.isFinite(downloadedAt.getTime())
+        ? downloadedAt.toLocaleString() : "Not recorded";
       const row = body.createEl("tr");
-      for (const value of [id, completed ? "Installed" : "File records only", recorded ? String(added + updated) : "Not recorded",
+      for (const value of [id, completed ? "Installed" : "File records only", downloadDate, recorded ? String(added + updated) : "Not recorded",
         recorded ? String(added) : "—", recorded ? String(updated) : "—", recorded ? String(removed) : "—"]) row.createEl("td", { text: value });
       const cell = row.createEl("td");
-      row.insertBefore(cell, row.children[2]);
+      row.insertBefore(cell, row.children[3]);
       if (!files.length) { cell.setText(recorded ? "No file changes recorded" : "File details were not saved for this release"); continue; }
       const details = cell.createEl("details");
       details.createEl("summary", { text: "View " + files.length + " file changes" });

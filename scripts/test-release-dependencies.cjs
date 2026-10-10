@@ -69,6 +69,8 @@ async function load(file) {
   assert.equal(data.installed.trackingVersion, 2);
   assert.deepEqual(data.baseRelease, baseline);
   assert.deepEqual(data.installed.appliedReleaseIds, [b]);
+  assert.equal(new Date(data.installed.downloadedAt[b]).toISOString(), data.installed.downloadedAt[b]);
+  assert.equal(data.installed.downloadedAt[a], undefined);
   assert.equal(service.isReleaseInstalled(manifest.releases[0], manifest), false);
   assert.equal(service.isReleaseInstalled(release, manifest), true);
   assert.deepEqual(selected(third.releaseId), [third.releaseId]);
