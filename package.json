@@ -1,6 +1,6 @@
 {
   "name": "tbpedia-update",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Managed Tbpedia content updates for Obsidian",
   "scripts": {
