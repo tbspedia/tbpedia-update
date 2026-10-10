@@ -48,6 +48,9 @@ def read_workbook(filename):
                     value = value == '1'
                 elif kind == 'e':
                     raise ValueError(f"{sheet.attrib['name']}!{ref}: Excel error {value}")
+                elif kind == 'd':
+                    # Excel stores dates with a midnight time; manifests use dates only.
+                    value = value.split('T', 1)[0]
                 elif kind not in ('str', 'd') and value:
                     value = float(value)
                     if value.is_integer():
@@ -181,9 +184,9 @@ def validate_manifest(m):
             for dependency in dependencies:
                 require(dependency in ids, f'releases/{i}/dependsOn: {dependency} must identify an earlier release in this manifest')
         ids.add(r['releaseId'])
-        require(re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z', r['publishedAt']) is not None,
-                'publishedAt must use YYYY-MM-DDTHH:MM:SSZ')
-        datetime.strptime(r['publishedAt'], '%Y-%m-%dT%H:%M:%SZ')
+        require(re.fullmatch(r'\d{4}-\d{2}-\d{2}', r['publishedAt']) is not None,
+                'publishedAt must use YYYY-MM-DD')
+        datetime.strptime(r['publishedAt'], '%Y-%m-%d')
         safe_path(r['filename'], 'filename')
         require('/' not in r['filename'] and r['filename'].endswith('.zip'), 'filename must be a ZIP basename')
         files, deletions = r.get('files'), r.get('deletions')

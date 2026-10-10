@@ -42,7 +42,7 @@
     {
       "releaseVersion": "zh-tw-notes-expanded-2026.10.1",
       "releaseId": "zh-tw-notes-expanded-2026-10-1.1",
-      "publishedAt": "2026-10-01T08:00:00Z",
+      "publishedAt": "2026-10-01",
       "filename": "zh-tw-notes-expanded-2026-10-1.1.zip",
       "files": [
         {
@@ -61,8 +61,8 @@
     },
     {
       "releaseVersion": "zh-tw-notes-expanded-2026.11.1",
-      "releaseId": "zh-tw-notes-expanded-2026-11-1.1",
-      "publishedAt": "2026-11-01T08:00:00Z",
+      "releaseId": "zh-tw-notes-expanded-2026-11-1.2",
+      "publishedAt": "2026-11-01",
       "filename": "zh-tw-notes-expanded-2026-11-1.2.zip",
       "files": [
         {
@@ -76,6 +76,41 @@
         "added": 1,
         "updated": 0,
         "removed": 0
+      },
+      "dependsOn": []
+    },
+    {
+      "releaseVersion": "zh-tw-notes-expanded-2026.11.10",
+      "releaseId": "zh-tw-notes-expanded-2026-11-10.3",
+      "publishedAt": "2026-11-01",
+      "filename": "zh-tw-notes-expanded-2026-11-10.3.zip",
+      "files": [
+        {
+          "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+          "change": "+"
+        }
+      ],
+      "deletions": [
+        "00 說明/搜索 (search) 9.md",
+        "00 說明/搜索 (search) 8.md"
+      ],
+      "releaseNotes": {
+        "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+        "added": 4,
+        "updated": 0,
+        "removed": 2
       },
       "dependsOn": []
     }

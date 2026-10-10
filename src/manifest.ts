@@ -53,6 +53,8 @@ function parseRelease(input: unknown, expectedKey: string, existingPaths: Set<st
   if (!releaseId || releaseId.key !== expectedKey) throw new Error(`releaseId must have the format ${expectedKey}-YYYY-M-D.sequence, for example ${expectedKey}-2026-10-1.1.`);
   if (releaseId.year !== version.year || releaseId.month !== version.month || releaseId.day !== version.day) throw new Error("releaseId date must match releaseVersion.");
   if (Number.isNaN(Date.parse(input.publishedAt))) throw new Error("publishedAt must be ISO-8601.");
+  const publishedDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.publishedAt);
+  if (publishedDate && !validDate(Number(publishedDate[1]), Number(publishedDate[2]), Number(publishedDate[3]))) throw new Error("publishedAt must be a valid date in YYYY-MM-DD format.");
   if (!Array.isArray(input.files) || !Array.isArray(input.deletions)) throw new Error("files and deletions must be arrays.");
   if (input.dependsOn !== undefined && (!Array.isArray(input.dependsOn) || input.dependsOn.some((id: unknown) => typeof id !== "string" || !id.trim()) || new Set(input.dependsOn).size !== input.dependsOn.length)) {
     throw new Error(`Release ${input.releaseId} dependsOn must be an array of unique release IDs.`);

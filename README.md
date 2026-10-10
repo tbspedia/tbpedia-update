@@ -1,6 +1,6 @@
 # tbpedia-update
 
-An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.2.8** and the Worker version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history. Every Worker response includes `X-Tbpedia-Worker-Version`, which allows the deployed Worker version to be checked without exposing configuration or secrets.
+An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.2.9** and the Worker version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history. Every Worker response includes `X-Tbpedia-Worker-Version`, which allows the deployed Worker version to be checked without exposing configuration or secrets.
 
 ## Repository layout
 

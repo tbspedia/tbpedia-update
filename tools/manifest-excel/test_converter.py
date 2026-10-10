@@ -9,6 +9,14 @@ import excel_to_json as e
 FOLDER = Path(__file__).parent
 
 class ConverterTests(unittest.TestCase):
+    def test_published_date_format(self):
+        manifest = json.loads((FOLDER / 'standard.source.json').read_text(encoding='utf-8'))
+        e.validate_manifest(manifest)
+        for date in ('2026-02-30', '2026-1-1', '2026-10-01T08:00:00Z', 'not a date'):
+            bad = copy.deepcopy(manifest)
+            bad['releases'][0]['publishedAt'] = date
+            with self.assertRaises(ValueError):
+                e.validate_manifest(bad)
     def test_dependency_validation(self):
         m = json.loads((FOLDER / 'standard.source.json').read_text(encoding='utf-8'))
         self.assertEqual(m['releases'][1]['dependsOn'], [])

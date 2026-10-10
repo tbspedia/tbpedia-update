@@ -2,6 +2,12 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.9 — 2026-10-10
+
+- Use YYYY-MM-DD publication dates in release manifests, Excel templates, exported JSON, and plugin release information.
+- Validate publication dates in the Excel exporter and reject invalid calendar dates in the plugin while accepting older timestamp manifests.
+- Refresh the eight-sheet Excel editor and exports from the published standard manifest, preserving the additional release entry with a corrected array index.
+
 ## 1.2.8 — 2026-10-10
 
 - Add editable dependsOn arrays to Excel release templates and generated release manifests, with minimum plugin version 1.2.0.

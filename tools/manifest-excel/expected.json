@@ -1,19 +1,19 @@
 {
-  "zh-tw-reading-standard-V1": {
+  "zh-tw-notes-essential-V1": {
     "schemaVersion": 2,
     "product": "Tbpedia-Distribute",
     "plugin": "tbpedia-update",
     "channel": "stable",
-    "title": "真佛百科閱讀系列標準版本",
+    "title": "真佛百科筆記系列基本版本",
     "tbpedia": {
       "language": {
         "code": "zh-TW"
       },
       "series": {
-        "id": "reading"
+        "id": "notes"
       },
       "edition": {
-        "id": "standard"
+        "id": "essential"
       }
     },
     "Collection": "V1",
@@ -41,10 +41,10 @@
     ],
     "releases": [
       {
-        "releaseVersion": "zh-tw-reading-standard-2026.10.1",
-        "releaseId": "zh-tw-reading-standard-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
-        "filename": "zh-tw-reading-standard-2026-10-1.1.zip",
+        "releaseVersion": "zh-tw-notes-essential-2026.10.1",
+        "releaseId": "zh-tw-notes-essential-2026-10-1.1",
+        "publishedAt": "2026-10-01",
+        "filename": "zh-tw-notes-essential-2026-10-1.1.zip",
         "files": [
           {
             "path": "01 文集部/測試更新-2026-10-1.md",
@@ -53,7 +53,7 @@
         ],
         "deletions": [],
         "releaseNotes": {
-          "summary": "測試：2026 年 10 月第 1 次增量更新。",
+          "summary": "模板：真佛百科筆記系列基本版本。請更新日期、檔案清單與版本後使用。",
           "added": 1,
           "updated": 0,
           "removed": 0
@@ -61,10 +61,10 @@
         "dependsOn": []
       },
       {
-        "releaseVersion": "zh-tw-reading-standard-2026.11.1",
-        "releaseId": "zh-tw-reading-standard-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
-        "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
+        "releaseVersion": "zh-tw-notes-essential-2026.11.1",
+        "releaseId": "zh-tw-notes-essential-2026-11-1.2",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-notes-essential-2026-11-1.2.zip",
         "files": [
           {
             "path": "01 文集部/測試更新-2026-11-1.md",
@@ -73,10 +73,45 @@
         ],
         "deletions": [],
         "releaseNotes": {
-          "summary": "測試：2026 年 11 月第 1 次增量更新。",
+          "summary": "模板：真佛百科筆記系列基本版本。請更新日期、檔案清單與版本後使用。",
           "added": 1,
           "updated": 0,
           "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-notes-essential-2026.11.10",
+        "releaseId": "zh-tw-notes-essential-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-notes-essential-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "模板：真佛百科筆記系列基本版本。請更新日期、檔案清單與版本後使用。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
         },
         "dependsOn": []
       }
@@ -126,7 +161,7 @@
       {
         "releaseVersion": "zh-tw-reading-advanced-2026.08.1",
         "releaseId": "zh-tw-reading-advanced-2026-8-1.1",
-        "publishedAt": "2026-08-01T08:00:00Z",
+        "publishedAt": "2026-08-01",
         "filename": "zh-tw-reading-advanced-2026-8-1.1.zip",
         "files": [
           {
@@ -153,21 +188,21 @@
       }
     ]
   },
-  "zh-tw-notes-essential-V1": {
+  "zh-tw-reading-standard-V1": {
     "schemaVersion": 2,
     "product": "Tbpedia-Distribute",
     "plugin": "tbpedia-update",
     "channel": "stable",
-    "title": "真佛百科筆記系列基本版本",
+    "title": "真佛百科閱讀系列標準版本",
     "tbpedia": {
       "language": {
         "code": "zh-TW"
       },
       "series": {
-        "id": "notes"
+        "id": "reading"
       },
       "edition": {
-        "id": "essential"
+        "id": "standard"
       }
     },
     "Collection": "V1",
@@ -195,10 +230,10 @@
     ],
     "releases": [
       {
-        "releaseVersion": "zh-tw-notes-essential-2026.10.1",
-        "releaseId": "zh-tw-notes-essential-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
-        "filename": "zh-tw-notes-essential-2026-10-1.1.zip",
+        "releaseVersion": "zh-tw-reading-standard-2026.10.1",
+        "releaseId": "zh-tw-reading-standard-2026-10-1.1",
+        "publishedAt": "2026-10-01",
+        "filename": "zh-tw-reading-standard-2026-10-1.1.zip",
         "files": [
           {
             "path": "01 文集部/測試更新-2026-10-1.md",
@@ -207,7 +242,7 @@
         ],
         "deletions": [],
         "releaseNotes": {
-          "summary": "模板：真佛百科筆記系列基本版本。請更新日期、檔案清單與版本後使用。",
+          "summary": "測試：2026 年 10 月第 1 次增量更新。",
           "added": 1,
           "updated": 0,
           "removed": 0
@@ -215,10 +250,10 @@
         "dependsOn": []
       },
       {
-        "releaseVersion": "zh-tw-notes-essential-2026.11.1",
-        "releaseId": "zh-tw-notes-essential-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
-        "filename": "zh-tw-notes-essential-2026-11-1.2.zip",
+        "releaseVersion": "zh-tw-reading-standard-2026.11.1",
+        "releaseId": "zh-tw-reading-standard-2026-11-1.2",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
         "files": [
           {
             "path": "01 文集部/測試更新-2026-11-1.md",
@@ -227,70 +262,7 @@
         ],
         "deletions": [],
         "releaseNotes": {
-          "summary": "模板：真佛百科筆記系列基本版本。請更新日期、檔案清單與版本後使用。",
-          "added": 1,
-          "updated": 0,
-          "removed": 0
-        },
-        "dependsOn": []
-      }
-    ]
-  },
-  "zhtw-notes-expanded-V1": {
-    "schemaVersion": 2,
-    "product": "Tbpedia-Distribute",
-    "plugin": "tbpedia-update",
-    "channel": "stable",
-    "title": "真佛百科筆記系列擴充版本",
-    "tbpedia": {
-      "language": {
-        "code": "zh-TW"
-      },
-      "series": {
-        "id": "notes"
-      },
-      "edition": {
-        "id": "expanded"
-      }
-    },
-    "Collection": "V1",
-    "minimumPluginVersion": "1.2.0",
-    "minimumObsidianVersion": "1.6.0",
-    "managedRoots": [
-      "00 說明",
-      "01 文集部",
-      "02 開示部",
-      "03 經藏部",
-      "04 頌與戒律",
-      "05 傳法部",
-      "06 密法儀軌",
-      "07 佛語典藏",
-      "08 其他類別",
-      "09 蓮香上師",
-      "10 真佛宗",
-      "20 專題",
-      "50 列表",
-      "60 導讀",
-      "70 背景資料",
-      "90 幫助",
-      "98 下載資料",
-      "99 Setting"
-    ],
-    "releases": [
-      {
-        "releaseVersion": "zh-tw-notes-expanded-2026.10.1",
-        "releaseId": "zh-tw-notes-expanded-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
-        "filename": "zh-tw-notes-expanded-2026-10-1.1.zip",
-        "files": [
-          {
-            "path": "01 文集部/測試更新-2026-10-1.md",
-            "change": "+"
-          }
-        ],
-        "deletions": [],
-        "releaseNotes": {
-          "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+          "summary": "測試：2026 年 11 月第 1 次增量更新。",
           "added": 1,
           "updated": 0,
           "removed": 0
@@ -298,22 +270,72 @@
         "dependsOn": []
       },
       {
-        "releaseVersion": "zh-tw-notes-expanded-2026.11.1",
-        "releaseId": "zh-tw-notes-expanded-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
-        "filename": "zh-tw-notes-expanded-2026-11-1.2.zip",
+        "releaseVersion": "zh-tw-reading-standard-2026.11.10",
+        "releaseId": "zh-tw-reading-standard-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-reading-standard-2026-11-10.3.zip",
         "files": [
           {
-            "path": "01 文集部/測試更新-2026-11-1.md",
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
             "change": "+"
           }
         ],
-        "deletions": [],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
         "releaseNotes": {
-          "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
-          "added": 1,
+          "summary": "測試：2026 年 11 月 10 日第 3 次增量更新。",
+          "added": 4,
           "updated": 0,
-          "removed": 0
+          "removed": 2
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-reading-standard-2026.11.21",
+        "releaseId": "zh-tw-reading-standard-2026-11-21.4",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-reading-standard-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "測試：2026 年 11 月 10 日第 3 次增量更新。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
         },
         "dependsOn": []
       }
@@ -363,7 +385,7 @@
       {
         "releaseVersion": "zh-tw-notes-essential-2026.10.1",
         "releaseId": "zh-tw-notes-essential-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
+        "publishedAt": "2026-10-01",
         "filename": "zh-tw-notes-essential-2026-10-1.1.zip",
         "files": [
           {
@@ -382,8 +404,8 @@
       },
       {
         "releaseVersion": "zh-tw-notes-essential-2026.11.1",
-        "releaseId": "zh-tw-notes-essential-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
+        "releaseId": "zh-tw-notes-essential-2026-11-1.2",
+        "publishedAt": "2026-11-01",
         "filename": "zh-tw-notes-essential-2026-11-1.2.zip",
         "files": [
           {
@@ -397,6 +419,159 @@
           "added": 1,
           "updated": 0,
           "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-notes-essential-2026.11.10",
+        "releaseId": "zh-tw-notes-essential-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-notes-essential-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "模板：真佛百科筆記系列基本版本。請更新日期、檔案清單與版本後使用。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
+        },
+        "dependsOn": []
+      }
+    ]
+  },
+  "zhtw-notes-expanded-V1": {
+    "schemaVersion": 2,
+    "product": "Tbpedia-Distribute",
+    "plugin": "tbpedia-update",
+    "channel": "stable",
+    "title": "真佛百科筆記系列擴充版本",
+    "tbpedia": {
+      "language": {
+        "code": "zh-TW"
+      },
+      "series": {
+        "id": "notes"
+      },
+      "edition": {
+        "id": "expanded"
+      }
+    },
+    "Collection": "V1",
+    "minimumPluginVersion": "1.2.0",
+    "minimumObsidianVersion": "1.6.0",
+    "managedRoots": [
+      "00 說明",
+      "01 文集部",
+      "02 開示部",
+      "03 經藏部",
+      "04 頌與戒律",
+      "05 傳法部",
+      "06 密法儀軌",
+      "07 佛語典藏",
+      "08 其他類別",
+      "09 蓮香上師",
+      "10 真佛宗",
+      "20 專題",
+      "50 列表",
+      "60 導讀",
+      "70 背景資料",
+      "90 幫助",
+      "98 下載資料",
+      "99 Setting"
+    ],
+    "releases": [
+      {
+        "releaseVersion": "zh-tw-notes-expanded-2026.10.1",
+        "releaseId": "zh-tw-notes-expanded-2026-10-1.1",
+        "publishedAt": "2026-10-01",
+        "filename": "zh-tw-notes-expanded-2026-10-1.1.zip",
+        "files": [
+          {
+            "path": "01 文集部/測試更新-2026-10-1.md",
+            "change": "+"
+          }
+        ],
+        "deletions": [],
+        "releaseNotes": {
+          "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+          "added": 1,
+          "updated": 0,
+          "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-notes-expanded-2026.11.1",
+        "releaseId": "zh-tw-notes-expanded-2026-11-1.2",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-notes-expanded-2026-11-1.2.zip",
+        "files": [
+          {
+            "path": "01 文集部/測試更新-2026-11-1.md",
+            "change": "+"
+          }
+        ],
+        "deletions": [],
+        "releaseNotes": {
+          "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+          "added": 1,
+          "updated": 0,
+          "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-notes-expanded-2026.11.10",
+        "releaseId": "zh-tw-notes-expanded-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-notes-expanded-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "模板：真佛百科筆記系列擴充版本。請更新日期、檔案清單與版本後使用。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
         },
         "dependsOn": []
       }
@@ -446,7 +621,7 @@
       {
         "releaseVersion": "zh-tw-specialisation-ai-2026.10.1",
         "releaseId": "zh-tw-specialisation-ai-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
+        "publishedAt": "2026-10-01",
         "filename": "zh-tw-specialisation-ai-2026-10-1.1.zip",
         "files": [
           {
@@ -465,8 +640,8 @@
       },
       {
         "releaseVersion": "zh-tw-specialisation-ai-2026.11.1",
-        "releaseId": "zh-tw-specialisation-ai-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
+        "releaseId": "zh-tw-specialisation-ai-2026-11-1.2",
+        "publishedAt": "2026-11-01",
         "filename": "zh-tw-specialisation-ai-2026-11-1.2.zip",
         "files": [
           {
@@ -480,6 +655,41 @@
           "added": 1,
           "updated": 0,
           "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-specialisation-ai-2026.11.10",
+        "releaseId": "zh-tw-specialisation-ai-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-specialisation-ai-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "模板：真佛百科專修系列人工智能版本。請更新日期、檔案清單與版本後使用。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
         },
         "dependsOn": []
       }
@@ -529,7 +739,7 @@
       {
         "releaseVersion": "zh-tw-specialisation-propagation-2026.10.1",
         "releaseId": "zh-tw-specialisation-propagation-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
+        "publishedAt": "2026-10-01",
         "filename": "zh-tw-specialisation-propagation-2026-10-1.1.zip",
         "files": [
           {
@@ -548,8 +758,8 @@
       },
       {
         "releaseVersion": "zh-tw-specialisation-propagation-2026.11.1",
-        "releaseId": "zh-tw-specialisation-propagation-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
+        "releaseId": "zh-tw-specialisation-propagation-2026-11-1.2",
+        "publishedAt": "2026-11-01",
         "filename": "zh-tw-specialisation-propagation-2026-11-1.2.zip",
         "files": [
           {
@@ -563,6 +773,41 @@
           "added": 1,
           "updated": 0,
           "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-specialisation-propagation-2026.11.10",
+        "releaseId": "zh-tw-specialisation-propagation-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-specialisation-propagation-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "模板：真佛百科專修系列弘法版本。請更新日期、檔案清單與版本後使用。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
         },
         "dependsOn": []
       }
@@ -612,7 +857,7 @@
       {
         "releaseVersion": "zh-tw-specialisation-seclusion-2026.10.1",
         "releaseId": "zh-tw-specialisation-seclusion-2026-10-1.1",
-        "publishedAt": "2026-10-01T08:00:00Z",
+        "publishedAt": "2026-10-01",
         "filename": "zh-tw-specialisation-seclusion-2026-10-1.1.zip",
         "files": [
           {
@@ -631,8 +876,8 @@
       },
       {
         "releaseVersion": "zh-tw-specialisation-seclusion-2026.11.1",
-        "releaseId": "zh-tw-specialisation-seclusion-2026-11-1.1",
-        "publishedAt": "2026-11-01T08:00:00Z",
+        "releaseId": "zh-tw-specialisation-seclusion-2026-11-1.2",
+        "publishedAt": "2026-11-01",
         "filename": "zh-tw-specialisation-seclusion-2026-11-1.2.zip",
         "files": [
           {
@@ -646,6 +891,41 @@
           "added": 1,
           "updated": 0,
           "removed": 0
+        },
+        "dependsOn": []
+      },
+      {
+        "releaseVersion": "zh-tw-specialisation-seclusion-2026.11.10",
+        "releaseId": "zh-tw-specialisation-seclusion-2026-11-10.3",
+        "publishedAt": "2026-11-01",
+        "filename": "zh-tw-specialisation-seclusion-2026-11-10.3.zip",
+        "files": [
+          {
+            "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+            "change": "+"
+          },
+          {
+            "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+            "change": "+"
+          }
+        ],
+        "deletions": [
+          "00 說明/搜索 (search) 9.md",
+          "00 說明/搜索 (search) 8.md"
+        ],
+        "releaseNotes": {
+          "summary": "模板：真佛百科專修系列閉關版本。請更新日期、檔案清單與版本後使用。",
+          "added": 4,
+          "updated": 0,
+          "removed": 2
         },
         "dependsOn": []
       }

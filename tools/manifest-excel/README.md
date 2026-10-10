@@ -39,7 +39,7 @@ Every release has a `/releases/<index>/dependsOn` row with type `json`. Its defa
 - To add a deletion to an empty list, replace the `/releases/0/deletions` row with `/releases/0/deletions/0`, type `string`, and the relative file path. Add `/deletions/1` for the next path.
 - Keep added/updated/removed counts aligned with the file and deletion lists. The converter checks these counts.
 - Remove all rows belonging to a release to remove it, then renumber later release indexes. To have no releases, replace all release rows with one `/releases` row, type `json`, value `[]`.
-- Use literal values, not Excel formulas. Text timestamps must use `YYYY-MM-DDTHH:MM:SSZ`.
+- Use literal values, not Excel formulas. Publication dates must use `YYYY-MM-DD`.
 - `/tbpedia` contains the language, series and edition identity. `/Collection` is the version string. The former lowercase `/collection` key is rejected.
 - Existing files are protected unless `--force` is provided. All sheets are validated before any output is written.
 
@@ -58,7 +58,7 @@ Every release has a `/releases/<index>/dependsOn` row with type `json`. Its defa
 
 Excel limits tab names to 31 characters. B4 stores the full requested name, including the two longer names. Both essential-notes tabs are retained as requested and describe the same collection.
 
-Source snapshot: 2026-10-08. The reading tabs use the actual repository manifests below. At the time of creation, the repository had no notes or specialisation manifests. Those six sheets are templates derived from reading standard. Their series, edition, title, release identifier prefixes, ZIP filename prefixes and summaries were adjusted. Managed roots, sample file paths and sample publication dates remain from the reference and must be reviewed before publishing. The standard source includes a November 2026 sample release, which is preserved.
+Standard source refreshed from the linked GitHub manifest on 2026-10-10, preserving all three releases, dependency arrays, font files, and deletion lists. The advanced tab retains its saved source snapshot. The six notes and specialisation sheets are templates derived from the refreshed standard source. Their series, edition, title, release identifier prefixes, ZIP filename prefixes, dependency ID prefixes, and summaries are adjusted. Review their sample file paths and publication dates before publishing.
 
 - https://github.com/tbspedia/tbpedia-update/blob/main/manifests/zh-tw/reading/standard/V1/latest.json
 - https://github.com/tbspedia/tbpedia-update/blob/main/manifests/zh-tw/reading/advanced/V1/latest.json

@@ -302,8 +302,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
           for (const item of checkboxes.values()) item.checked = false;
           updateSelection();
         });
-        const date = new Date(release.publishedAt);
-        const values = [release.releaseVersion, date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }),
+        const values = [release.releaseVersion, release.publishedAt.slice(0, 10),
           installed ? "Yes (installed)" : "No",
           release.releaseNotes.summary, String(release.releaseNotes.added), String(release.releaseNotes.updated), String(release.releaseNotes.removed),
           release.dependsOn === undefined ? "All earlier releases" : release.dependsOn.length ? release.dependsOn.join(", ") : "None (independent)"];
@@ -334,7 +333,7 @@ class ReleaseNoticeModal extends Modal {
     contentEl.createEl("h2", { text: "New Tbpedia release available" });
     contentEl.createEl("h3", { text: this.manifest.title });
     contentEl.createEl("p", { text: this.release.releaseVersion });
-    contentEl.createEl("p", { text: `Published: ${new Date(this.release.publishedAt).toLocaleString()}` });
+    contentEl.createEl("p", { text: `Published: ${this.release.publishedAt.slice(0, 10)}` });
     contentEl.createEl("p", { text: this.release.releaseNotes.summary });
     contentEl.createEl("p", { text: `Added: ${this.release.releaseNotes.added} · Updated: ${this.release.releaseNotes.updated} · Removed: ${this.release.releaseNotes.removed}` });
     contentEl.createEl("p", { text: "Go to Settings → Release information to select releases for download. This announcement will appear again when a new release is available." });
