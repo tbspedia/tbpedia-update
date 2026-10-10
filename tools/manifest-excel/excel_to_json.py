@@ -10,7 +10,7 @@ import re
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path, PurePosixPath
 
 NS = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
@@ -29,6 +29,8 @@ def read_workbook(filename):
         targets = {r.attrib['Id']: r.attrib['Target'] for r in rels
                    if r.attrib.get('TargetMode') != 'External'}
         book = ET.fromstring(archive.read('xl/workbook.xml'))
+        properties = book.find('s:workbookPr', NS)
+        date1904 = properties is not None and properties.get('date1904') in ('1', 'true')
         for sheet in book.findall('s:sheets/s:sheet', NS):
             target = targets[sheet.attrib[f'{{{REL}}}id']]
             member = target.lstrip('/') if target.startswith('/') else 'xl/' + target
@@ -56,6 +58,18 @@ def read_workbook(filename):
                     if value.is_integer():
                         value = int(value)
                 cells[ref] = value
+            # Excel may save edited dates as serial numbers instead of ISO date cells.
+            # Only publication-date fields accept this conversion; other strings stay strict.
+            for ref, pointer in list(cells.items()):
+                if ref.startswith('A') and isinstance(pointer, str) and pointer.endswith('/publishedAt'):
+                    value_ref = 'B' + ref[1:]
+                    value = cells.get(value_ref)
+                    if isinstance(value, (int, float)) and not isinstance(value, bool):
+                        if not math.isfinite(value) or value < 0 or (not date1904 and int(value) == 60):
+                            raise ValueError(f"{sheet.attrib['name']}!{value_ref}: invalid Excel publication date")
+                        epoch = datetime(1904, 1, 1) if date1904 else datetime(1899, 12, 31)
+                        days = int(value) if date1904 or value < 60 else int(value) - 1
+                        cells[value_ref] = (epoch + timedelta(days=days)).strftime('%Y-%m-%d')
             yield sheet.attrib['name'], cells
 
 
@@ -235,6 +249,8 @@ def convert(workbook, output, layout='tabs', selected=None, force=False):
             try:
                 entries.append((pointer, typed_value(value, kind)))
             except (ValueError, TypeError) as e:
+                if isinstance(pointer, str) and pointer.endswith('/dependsOn'):
+                    raise ValueError(f'{name}, row {row}: dependsOn must be a JSON array, such as [] or ["release-id"]') from e
                 raise ValueError(f'{name}, row {row}: {e}') from e
         try:
             manifest = build_manifest(entries)

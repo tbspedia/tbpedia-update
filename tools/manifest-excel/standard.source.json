@@ -117,37 +117,30 @@
     {
       "releaseVersion": "zh-tw-reading-standard-2026.11.21",
       "releaseId": "zh-tw-reading-standard-2026-11-21.4",
-      "publishedAt": "2026-11-01",
-      "filename": "zh-tw-reading-standard-2026-11-10.3.zip",
+      "publishedAt": "2026-11-21",
+      "filename": "zh-tw-reading-standard-2026-11-21.4.zip",
       "files": [
         {
-          "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+          "path": "我的書架",
           "change": "+"
         },
         {
-          "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
-          "change": "+"
-        },
-        {
-          "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
-          "change": "+"
-        },
-        {
-          "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+          "path": "90 幫助/6 如何應用真佛翻譯器 True Buddha Pedia Translator.md",
           "change": "+"
         }
       ],
       "deletions": [
-        "00 說明/搜索 (search) 9.md",
-        "00 說明/搜索 (search) 8.md"
+        "00 說明/搜索 (search) 7.md"
       ],
       "releaseNotes": {
-        "summary": "測試：2026 年 11 月 10 日第 3 次增量更新。",
-        "added": 4,
+        "summary": "測試：2026 年 11 月 21 日第 4 次增量更新。",
+        "added": 2,
         "updated": 0,
-        "removed": 2
+        "removed": 1
       },
-      "dependsOn": []
+      "dependsOn": [
+        "zh-tw-reading-standard-2026-11-10.3"
+      ]
     }
   ]
 }

@@ -2,6 +2,7 @@ import copy
 import json
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 from pathlib import Path
 import excel_to_json as e
@@ -9,6 +10,19 @@ import excel_to_json as e
 FOLDER = Path(__file__).parent
 
 class ConverterTests(unittest.TestCase):
+    def test_excel_serial_publication_dates(self):
+        for date1904, serial in ((False, 46296), (True, 44834)):
+            with tempfile.TemporaryDirectory() as directory:
+                workbook = Path(directory) / 'dates.xlsx'
+                with zipfile.ZipFile(workbook, 'w') as archive:
+                    archive.writestr('xl/workbook.xml', f'<workbook xmlns="{e.NS["s"]}" xmlns:r="{e.REL}"><workbookPr date1904="{int(date1904)}"/><sheets><sheet name="Dates" r:id="rId1"/></sheets></workbook>')
+                    archive.writestr('xl/_rels/workbook.xml.rels', '<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>')
+                    archive.writestr('xl/worksheets/sheet1.xml', f'<worksheet xmlns="{e.NS["s"]}"><sheetData><row r="40"><c r="A40" t="inlineStr"><is><t>/releases/0/publishedAt</t></is></c><c r="B40"><v>{serial}</v></c><c r="B41"><v>123</v></c></row></sheetData></worksheet>')
+                _, cells = next(e.read_workbook(workbook))
+                self.assertEqual(cells['B40'], '2026-10-01')
+                with self.assertRaisesRegex(ValueError, 'Excel text'):
+                    e.typed_value(cells['B41'], 'string')
+
     def test_published_date_format(self):
         manifest = json.loads((FOLDER / 'standard.source.json').read_text(encoding='utf-8'))
         e.validate_manifest(manifest)
