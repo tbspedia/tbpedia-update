@@ -25,7 +25,7 @@ async function load(file) {
 }
 (async () => {
   const { preserveReadingFrontmatter: preserve, READING_PROPERTIES: keys } = await load('src/reading-frontmatter.ts');
-  const saved = '計劃閱讀: FALSE\n閱讀狀態: 在讀\n閱讀層次: 分析閱讀\n閱讀次數: 4\n想讀日期: \n在讀日期: "2026-10-09"\n已讀日期: \n不讀日期: \n棄讀日期: \n閱讀感想: |\n  我的第一行感想\n  第二行感想\n閱讀推薦: [朋友, 學生]\n評分: 5\n';
+  const saved = '計劃閱讀: FALSE\n閱讀狀態: 在讀\n閱讀層次: 分析閱讀\n閱讀次數: 4\n想讀日期: \n在讀日期: "2026-10-09"\n已讀日期: \n不讀日期: \n棄讀日期: \n閱讀感想: |\n  我的第一行感想\n  第二行感想\n閱讀推薦: [朋友, 學生]\n評分: 5\n文章評分: \n文章推薦: \n';
   const old = `---\ntitle: 舊標題\n${saved}---\nOld body`;
   const replacement = `---\ntitle: 新標題\n${keys.map(key => `${key}: reset\n`).join('')}new: true\n---\nNew body`;
   const result = preserve(old, replacement);
@@ -35,6 +35,11 @@ async function load(file) {
   assert.equal(parsed(result).new, true);
   assert.ok(result.endsWith('New body'));
   assert.ok(result.includes(saved));
+  for (const rating of [0, 4]) {
+    const article = parsed(preserve(`---\n文章評分: ${rating}\n文章推薦: [朋友, 學生]\n---\nOld`, replacement));
+    assert.equal(article.文章評分, rating);
+    assert.deepEqual(article.文章推薦, ['朋友', '學生']);
+  }
   assert.ok(preserve(old, 'Body without frontmatter').includes(saved));
   assert.ok(preserve(old, 'Body without frontmatter').endsWith('Body without frontmatter'));
   assert.equal(preserve('No frontmatter', replacement), replacement);

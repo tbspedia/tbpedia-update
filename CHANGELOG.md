@@ -2,6 +2,10 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.14 — 2026-10-10
+
+- Also preserve existing 文章評分 and 文章推薦 frontmatter values, including blanks.
+
 ## 1.2.13 — 2026-10-10
 
 - Preserve twelve existing reading properties when replacing Markdown files with frontmatter, including blank and multiline values.
@@ -47,7 +51,7 @@ All notable changes to Tbpedia Update are recorded here. Plugin versions use sem
 - Show installed status, downloaded-file counts, added/updated/removed totals, and expandable file details.
 - Load file tables on expansion and explain missing historical records.
 
-## Unreleased
+## 1.2.14 — 2026-10-10
 
 - Allow explicit release deletions to remove existing Markdown files inside approved collection folders even when they are missing from `installed.ownedFiles`, including base collection files and locally created notes whose paths are listed.
 - Keep ownership checks for other files, reject folder deletion, and preserve path/reparse-point checks and transaction rollback.

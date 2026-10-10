@@ -350,7 +350,7 @@ class OverwriteModal extends Modal {
   onOpen(): void {
     this.contentEl.createEl("h2", { text: "Overwrite existing file?" });
     this.contentEl.createEl("p", { text: "With your permission, this update will replace the existing file with the release version. For Markdown files with frontmatter, your existing reading properties will be preserved; other properties and the article content may change." });
-    if (this.path.toLowerCase().endsWith(".md")) this.contentEl.createEl("p", { text: "Preserved properties: 計劃閱讀、閱讀狀態、閱讀層次、閱讀次數、想讀日期、在讀日期、已讀日期、不讀日期、棄讀日期、閱讀感想、閱讀推薦、評分. Saved values, including blank values, are kept rather than reset to defaults." });
+    if (this.path.toLowerCase().endsWith(".md")) this.contentEl.createEl("p", { text: "Preserved properties: 計劃閱讀、閱讀狀態、閱讀層次、閱讀次數、想讀日期、在讀日期、已讀日期、不讀日期、棄讀日期、閱讀感想、閱讀推薦、評分、文章評分、文章推薦. Saved values, including blank values, are kept rather than reset to defaults." });
     this.contentEl.createEl("p", { text: this.path });
     this.contentEl.createEl("p", { text: "Overwrite all applies to all remaining conflicting files in this update, including subsequent releases. Cancel stops the current release; earlier completed releases remain installed." });
     new Setting(this.contentEl)

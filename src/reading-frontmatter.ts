@@ -3,6 +3,7 @@ import { parseYaml, stringifyYaml } from "obsidian";
 export const READING_PROPERTIES = [
   "計劃閱讀", "閱讀狀態", "閱讀層次", "閱讀次數", "想讀日期", "在讀日期",
   "已讀日期", "不讀日期", "棄讀日期", "閱讀感想", "閱讀推薦", "評分",
+  "文章評分", "文章推薦",
 ] as const;
 
 interface Frontmatter { header: string; yaml: string; footer: string; body: string }
