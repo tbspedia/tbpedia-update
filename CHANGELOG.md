@@ -2,6 +2,11 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.5 — 2026-10-10
+
+- Display the saved collection Title before Language in My Download.
+- Move File details immediately after Status in the release history table.
+
 ## 1.2.4 — 2026-10-10
 
 - Add the offline My Download settings tab using saved data.json release and file history.
