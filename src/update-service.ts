@@ -3,6 +3,7 @@ import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
 import { compareReleaseVersions, compareVersions, parseAndValidateManifest } from "./manifest";
 import { assertManagedPath, ensureNoPathConflicts } from "./path-policy";
 import { currentOwnedPaths, migrateOwnedFiles } from "./ownership";
+import { preserveReadingFrontmatter } from "./reading-frontmatter";
 import { MANAGED_ROOTS, MANIFEST_BASE_URL, PluginData, ProbeResult, ReleaseEntry, ReleaseManifest, Source, SupportedLanguage, UpdateBatch, UpdatePlan, UpdateTransaction, WORKER_URL } from "./types";
 
 const STAGING_DIR = ".obsidian/plugins/tbpedia-update/.staging";
@@ -333,10 +334,8 @@ export class UpdateService {
       await assertNoReparsePoints(this.app, path);
       if (await adapter.exists(path)) {
         if ((await adapter.stat(path))?.type === "folder") throw new Error(`Refusing to replace a local folder: ${path}`);
-        if (!owned.has(path)) {
-          progress(`Waiting for overwrite approval: ${path}`);
-          if (await confirmOverwrite(path) === "cancel") throw new Error("Update cancelled. No files in this release were changed; earlier completed releases remain installed.");
-        }
+        progress(`Waiting for overwrite approval: ${path}`);
+        if (await confirmOverwrite(path) === "cancel") throw new Error("Update cancelled. No files in this release were changed; earlier completed releases remain installed.");
       }
     }
     for (const path of deletionCandidates) {
@@ -392,7 +391,12 @@ export class UpdateService {
         await mkdirp(adapter, parent(path));
         const entry = zip.file(path);
         if (!entry) throw new Error(`Archive entry disappeared: ${path}`);
-        await writeBinary(adapter, path, await entry.async("uint8array"));
+        if (path.toLowerCase().endsWith(".md") && await adapter.exists(path)) {
+          const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+          const existing = decoder.decode(await adapter.readBinary(path));
+          const incoming = decoder.decode(await entry.async("uint8array"));
+          await writeBinary(adapter, path, new TextEncoder().encode(preserveReadingFrontmatter(existing, incoming)));
+        } else await writeBinary(adapter, path, await entry.async("uint8array"));
       }
       const nextOwned = { ...previous.ownedFiles, [plan.release.releaseId]: plan.release.files.filter((file) => !preserved.has(file.path)).map((file) => folders.includes(file.path) ? { ...file, type: "folder" as const } : { ...file }) };
       await this.saveData({ ...this.getData(), installed: {

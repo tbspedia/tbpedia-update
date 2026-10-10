@@ -1,6 +1,6 @@
 {
   "name": "tbpedia-update",
-  "version": "1.2.11",
+  "version": "1.2.13",
   "private": true,
   "description": "Managed Tbpedia content updates for Obsidian",
   "scripts": {
@@ -12,7 +12,8 @@
     "worker:deploy": "wrangler deploy --config worker/wrangler.toml",
     "worker:check": "tsc --noEmit -p worker/tsconfig.json",
     "test:identity": "node scripts/test-manifest-identity.cjs",
-    "test:data": "node scripts/test-plugin-data.cjs"
+    "test:data": "node scripts/test-plugin-data.cjs",
+    "test:reading": "node scripts/test-reading-frontmatter.cjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20261002.1",

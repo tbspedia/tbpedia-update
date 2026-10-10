@@ -2,6 +2,12 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.13 — 2026-10-10
+
+- Preserve twelve existing reading properties when replacing Markdown files with frontmatter, including blank and multiline values.
+- Ask permission before replacing existing tracked or untracked files and explain reading property preservation in the dialog.
+- Keep backup and rollback behavior for merged Markdown updates.
+
 ## 1.2.11 — 2026-10-10
 
 - Support manifest paths that refer to ZIP directories, including empty folders.

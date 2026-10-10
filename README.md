@@ -1,6 +1,6 @@
 # tbpedia-update
 
-An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.2.11** and the Worker version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history. Every Worker response includes `X-Tbpedia-Worker-Version`, which allows the deployed Worker version to be checked without exposing configuration or secrets.
+An Obsidian plugin and Cloudflare Worker for installing approved incremental Tbpedia releases. Public release metadata comes from the GitHub manifest for the vault’s configured language; mirror links and NocoDB credentials remain in the Worker. The current plugin version is **1.2.13** and the Worker version is **1.1.0**; see [CHANGELOG.md](CHANGELOG.md) for change history. Every Worker response includes `X-Tbpedia-Worker-Version`, which allows the deployed Worker version to be checked without exposing configuration or secrets.
 
 ## Repository layout
 
@@ -50,7 +50,9 @@ The **Release information** tab in plugin settings reads the configured collecti
 
 Update checks announce the latest pending release with **Go to download** and **Acknowledge** actions. The first opens the Release information tab; the second closes the announcement without downloading. The plugin saves collection-scoped announcement keys in `notifiedReleaseIds`, so automatic startup checks announce each latest release once across restarts. A new release ID triggers a new startup announcement. Manual checks always show pending releases, including previously acknowledged releases. Previously acknowledged updates remain selectable in Release information.
 
-The plugin validates the collection tuple, exact approved managed roots, release compatibility, every archive path, archive/expanded-size limits, collisions, and the exact manifest file inventory. It creates a vault-local staging and backup transaction, refuses to overwrite unowned files, and restores backed-up files if applying the release fails.
+The plugin validates the collection tuple, exact approved managed roots, release compatibility, every archive path, archive/expanded-size limits, collisions, and the exact manifest file inventory. It creates a vault-local staging and backup transaction, requests permission before replacing any existing file (including tracked files), and restores backed-up files if applying the release fails. **Overwrite all** grants permission for the remaining existing files in that installation, including subsequent releases. Existing `data.json` files remain exempt because they are preserved entirely.
+
+When updating an existing Markdown file (`.md`, case-insensitive) with YAML frontmatter, the installer preserves the existing values of 計劃閱讀、閱讀狀態、閱讀層次、閱讀次數、想讀日期、在讀日期、已讀日期、不讀日期、棄讀日期、閱讀感想、閱讀推薦、評分. Blank values are preserved, and saved reading progress is never reset to release defaults. Other properties and article content come from the release. Properties absent from the existing file may be supplied by the release. If the release has no frontmatter, the installer adds frontmatter for the saved reading properties. Ordinary block properties retain their original YAML spelling and multiline formatting; complex YAML uses serialization while retaining property values. Invalid frontmatter stops the release and restores its files. The permission dialog explains these rules before replacement.
 
 ## Incremental release history
 
