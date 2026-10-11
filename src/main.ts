@@ -46,7 +46,7 @@ export default class TbpediaUpdatePlugin extends Plugin {
     const settings = (this.app as App & { setting?: { open(): void; openTabById(id: string): void } }).setting;
     this.settingsTab.selectReleases();
     if (settings) { settings.open(); settings.openTabById(this.manifest.id); }
-    else new Notice(this.t("Open Settings → Tbpedia Update → Release information to select releases."));
+    else new Notice(this.t("Open Settings → True Buddha Pedia Update → Release information to select releases."));
   }
 
   getSelectedBatch(manifest: ReleaseManifest, selectedIds: Set<string>): UpdateBatch { return this.updater.getSelectedBatch(manifest, selectedIds); }
@@ -101,7 +101,7 @@ class TbpediaUpdateSettingsTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     const renderId = ++this.renderId;
-    containerEl.createEl("h2", { text: "Tbpedia Update" });
+    containerEl.createEl("h2", { text: "True Buddha Pedia Update" });
     const tabs = containerEl.createDiv();
     tabs.setAttribute("role", "tablist");
     tabs.style.display = "flex";

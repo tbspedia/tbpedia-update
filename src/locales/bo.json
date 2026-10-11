@@ -93,7 +93,7 @@
   "Not found.": "མ་རྙེད།",
   "Not recorded": "ཟིན་ཐོ་མེད།",
   "Only the stable release channel is supported.": "བརྟན་པའི་འགྲེམས་སྤེལ་རྒྱུད་ལམ་ཁོ་ནར་རྒྱབ་སྐྱོར་ཡོད།",
-  "Open Settings → Tbpedia Update → Release information to select releases.": "སྒྲིག་འགོད་ → Tbpedia Update → འགྲེམས་སྤེལ་ཆ་འཕྲིན་ཁ་ཕྱེ་ནས་འགྲེམས་སྤེལ་འདེམས་རོགས།",
+  "Open Settings → True Buddha Pedia Update → Release information to select releases.": "སྒྲིག་འགོད་ → True Buddha Pedia Update → འགྲེམས་སྤེལ་ཆ་འཕྲིན་ཁ་ཕྱེ་ནས་འགྲེམས་སྤེལ་འདེམས་རོགས།",
   "Overwrite all": "ཚང་མ་བསྐྱར་འབྲི།",
   "Overwrite all applies to all remaining conflicting files in this update, including subsequent releases. Cancel stops the current release; earlier completed releases remain installed.": "ཚང་མ་བསྐྱར་འབྲི་ནི་གསར་སྒྱུར་འདིའི་འགལ་ཟླ་ཡིག་ཆ་ལྷག་མ་ཚང་མ་དང་རྗེས་མའི་འགྲེམས་སྤེལ་ལའང་སྤྱོད། འདོར་བས་ད་ལྟའི་འགྲེམས་སྤེལ་མཚམས་འཇོག་བྱེད། དེ་སྔོན་མཇུག་འགྲིལ་བའི་འགྲེམས་སྤེལ་སྒྲིག་འཇུག་བྱས་པ་སོར་གནས་ཡིན།",
   "Overwrite existing file?": "ཡོད་བཞིན་པའི་ཡིག་ཆ་བསྐྱར་འབྲི་བྱེད་དམ།",

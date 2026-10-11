@@ -93,7 +93,7 @@
   "Not found.": "ไม่พบ",
   "Not recorded": "ไม่ได้บันทึก",
   "Only the stable release channel is supported.": "รองรับเฉพาะช่องทางการเผยแพร่ที่เสถียรเท่านั้น",
-  "Open Settings → Tbpedia Update → Release information to select releases.": "เปิดการตั้งค่า → อัปเดต Tbpedia → ข้อมูลการเผยแพร่เพื่อเลือกการเผยแพร่",
+  "Open Settings → True Buddha Pedia Update → Release information to select releases.": "เปิดการตั้งค่า → อัปเดต Tbpedia → ข้อมูลการเผยแพร่เพื่อเลือกการเผยแพร่",
   "Overwrite all": "เขียนทับทั้งหมด",
   "Overwrite all applies to all remaining conflicting files in this update, including subsequent releases. Cancel stops the current release; earlier completed releases remain installed.": "เขียนทับทั้งหมดนำไปใช้กับไฟล์ที่ขัดแย้งกันที่เหลืออยู่ทั้งหมดในการอัปเดตนี้ รวมถึงรุ่นต่อ ๆ ไป ยกเลิกจะหยุดการเปิดตัวปัจจุบัน รีลีสที่เสร็จสมบูรณ์ก่อนหน้านี้ยังคงติดตั้งอยู่",
   "Overwrite existing file?": "เขียนทับไฟล์ที่มีอยู่?",

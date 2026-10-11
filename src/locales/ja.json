@@ -93,7 +93,7 @@
   "Not found.": "見つかりません。",
   "Not recorded": "記録されていない",
   "Only the stable release channel is supported.": "安定版リリース チャネルのみがサポートされます。",
-  "Open Settings → Tbpedia Update → Release information to select releases.": "[設定] → [Tbpedia アップデート] → [リリース情報] を開き、リリースを選択します。",
+  "Open Settings → True Buddha Pedia Update → Release information to select releases.": "[設定] → [Tbpedia アップデート] → [リリース情報] を開き、リリースを選択します。",
   "Overwrite all": "すべて上書き",
   "Overwrite all applies to all remaining conflicting files in this update, including subsequent releases. Cancel stops the current release; earlier completed releases remain installed.": "[すべて上書き] は、後続のリリースを含む、この更新プログラムの残りのすべての競合ファイルに適用されます。キャンセルは現在のリリースを停止します。以前に完了したリリースはインストールされたままになります。",
   "Overwrite existing file?": "既存のファイルを上書きしますか?",
