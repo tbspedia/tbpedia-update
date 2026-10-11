@@ -1,3 +1,4 @@
+import { translate } from "./i18n";
 import JSZip from "jszip";
 import { App, DataAdapter, Notice, Platform, requestUrl } from "obsidian";
 import { compareReleaseVersions, compareVersions, parseAndValidateManifest } from "./manifest";
@@ -15,6 +16,7 @@ export type OverwriteDecision = "overwrite" | "overwrite-all" | "cancel";
 export type ConfirmOverwrite = (path: string) => Promise<OverwriteDecision>;
 
 export class UpdateService {
+  private t = (key: string, values?: readonly unknown[]): string => translate(this.getData().interfaceLanguage ?? (this.getData().languageCode || undefined), key, values);
   private manifestCache?: { key: string; value: ReleaseManifest; fetchedAt: number };
   private manifestRequest?: { key: string; promise: Promise<ReleaseManifest> };
   constructor(
@@ -93,19 +95,19 @@ export class UpdateService {
     for (let index = 0; index < batch.releases.length; index += 1) {
       this.assertSelectedCollection(batch.manifest);
       const release = batch.releases[index];
-      progress(`Release ${index + 1} of ${batch.releases.length}: ${release.releaseVersion}`);
+      progress(this.t("Release {0} of {1}: {2}", [index + 1, batch.releases.length, release.releaseVersion]));
       await this.installRelease(batch.manifest, release, progress, approveOverwrite);
     }
-    new Notice(`Installed ${batch.releases.length} Tbpedia release(s).`);
+    new Notice(this.t("Installed {0} Tbpedia release(s).", [batch.releases.length]));
   }
 
   private async installRelease(manifest: ReleaseManifest, release: ReleaseEntry, progress: (message: string) => void, confirmOverwrite: ConfirmOverwrite): Promise<void> {
     let transaction: UpdateTransaction | undefined;
     let committed = false;
     try {
-      progress("Creating update transaction…");
+      progress(this.t("Creating update transaction…"));
       transaction = await this.createTransaction(manifest, release);
-      progress("Discovering update sources…");
+      progress(this.t("Discovering update sources…"));
       const sources = await this.getSources(manifest, release, transaction);
       if (!sources.length) throw new Error("No enabled update source is available.");
       const ranked = await this.rankSources(sources, transaction, progress);
@@ -115,7 +117,7 @@ export class UpdateService {
       let lastError: unknown;
       for (const source of ranked) {
         try {
-          progress(`Downloading from ${source.name}…`);
+          progress(this.t("Downloading from {0}…", [source.name]));
           archive = await this.downloadPackage(source, transaction, release.filename);
           await this.validateArchive(archive, manifest, release);
           break;
@@ -123,16 +125,16 @@ export class UpdateService {
       }
       if (!archive) throw lastError instanceof Error ? lastError : new Error("All update sources failed.");
 
-      progress("Validating release archive…");
+      progress(this.t("Validating release archive…"));
       const stagingPath = `${STAGING_DIR}/${transaction.id}/package.zip`;
       await writeBinary(this.app.vault.adapter, stagingPath, archive);
       archive = await this.app.vault.adapter.readBinary(stagingPath);
       const plan = await this.validateArchive(archive, manifest, release);
-      progress("Applying managed files…");
+      progress(this.t("Applying managed files…"));
       await this.apply(plan, archive, progress, confirmOverwrite);
       committed = true;
       try { await this.report(transaction, "success"); }
-      catch { new Notice("Tbpedia was updated, but the service could not record the success audit."); }
+      catch { new Notice(this.t("Tbpedia was updated, but the service could not record the success audit.")); }
     } catch (error) {
       if (transaction && !committed) await this.report(transaction, "failed").catch(() => undefined);
       throw error;
@@ -220,11 +222,13 @@ export class UpdateService {
     const query = new URLSearchParams({ language: manifest.tbpedia.language.code, series: manifest.tbpedia.series.id, edition: manifest.tbpedia.edition.id, title: manifest.title, version: release.releaseVersion, filename: release.filename });
     const response = await this.api(`/updates/sources?${query}`, "GET", undefined, transaction);
     if (!Array.isArray(response.sources)) throw new Error("Update service returned an invalid source list.");
-    return response.sources.filter(isSource);
+    return response.sources.filter(isSource).map(source => ({ ...source,
+      name: source.name === "Update source" ? this.t("Update source") : source.name,
+    }));
   }
 
   private async rankSources(sources: Source[], transaction: UpdateTransaction, progress: (message: string) => void): Promise<Source[]> {
-    progress("Testing update sources…");
+    progress(this.t("Testing update sources…"));
     const probes = await Promise.all(sources.slice(0, 8).map(async (source) => ({ source, result: await this.probe(source, transaction) })));
     return probes
       .filter((item): item is { source: Source; result: ProbeResult } => item.result.healthy && typeof item.result.latencyMs === "number")
@@ -301,8 +305,8 @@ export class UpdateService {
     const missing = [...expected].filter((path) => !actualPaths.has(path));
     const unexpected = actual.filter((path) => !expected.has(path));
     if (missing.length || unexpected.length) {
-      const describe = (paths: string[]): string => `${paths.slice(0, 5).join(", ")}${paths.length > 5 ? ` (and ${paths.length - 5} more)` : ""}`;
-      const details = [missing.length ? `Missing files: ${describe(missing)}.` : "", unexpected.length ? `Unexpected files: ${describe(unexpected)}.` : ""].filter(Boolean).join(" ");
+      const describe = (paths: string[]): string => `${paths.slice(0, 5).join(", ")}${paths.length > 5 ? this.t(" (and {0} more)", [paths.length - 5]) : ""}`;
+      const details = [missing.length ? this.t("Missing files: {0}.", [describe(missing)]) : "", unexpected.length ? this.t("Unexpected files: {0}.", [describe(unexpected)]) : ""].filter(Boolean).join(" ");
       throw new Error(`Release archive does not exactly match the manifest inventory for ${release.releaseId} (${release.filename}). ${details}`);
     }
     return { manifest, release, writes: actual, folders, deletions: release.deletions };
@@ -319,7 +323,7 @@ export class UpdateService {
     for (const path of [...plan.writes, ...plan.deletions]) {
       if (path.split("/").at(-1)?.toLowerCase() === "data.json" && await adapter.exists(path)) {
         preserved.add(path);
-        progress(`Preserving existing ${path}`);
+        progress(this.t("Preserving existing {0}", [path]));
       }
     }
     const writes = plan.writes.filter((path) => !preserved.has(path));
@@ -334,7 +338,7 @@ export class UpdateService {
       await assertNoReparsePoints(this.app, path);
       if (await adapter.exists(path)) {
         if ((await adapter.stat(path))?.type === "folder") throw new Error(`Refusing to replace a local folder: ${path}`);
-        progress(`Waiting for overwrite approval: ${path}`);
+        progress(this.t("Waiting for overwrite approval: {0}", [path]));
         if (await confirmOverwrite(path) === "cancel") throw new Error("Update cancelled. No files in this release were changed; earlier completed releases remain installed.");
       }
     }
@@ -343,7 +347,7 @@ export class UpdateService {
       const managedPath = assertManagedPath(path);
       const exists = await adapter.exists(managedPath);
       if (!exists) {
-        progress(`Information: skipping deletion; file is already absent: ${managedPath}`);
+        progress(this.t("Information: skipping deletion; file is already absent: {0}", [managedPath]));
         continue;
       }
       if ((await adapter.stat(managedPath))?.type === "folder") {
@@ -384,10 +388,10 @@ export class UpdateService {
 
     try {
       const zip = await JSZip.loadAsync(archive, { createFolders: false, checkCRC32: false });
-      for (const path of folders) { progress(`Creating folder ${path}…`); await mkdirp(adapter, path); }
+      for (const path of folders) { progress(this.t("Creating folder {0}…", [path])); await mkdirp(adapter, path); }
       for (const path of deletions) if (await adapter.exists(path)) await adapter.remove(path);
       for (const path of writes) {
-        progress(`Writing ${path}…`);
+        progress(this.t("Writing {0}…", [path]));
         await mkdirp(adapter, parent(path));
         const entry = zip.file(path);
         if (!entry) throw new Error(`Archive entry disappeared: ${path}`);

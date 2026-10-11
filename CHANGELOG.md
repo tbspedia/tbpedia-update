@@ -2,6 +2,13 @@
 
 All notable changes to Tbpedia Update are recorded here. Plugin versions use semantic versioning: `major.minor.patch`.
 
+## 1.2.15 — 2026-10-11
+
+- Localize 211 UI, validation, backend error, and download progress/success messages in all 14 supported languages.
+- Apply interface language changes immediately to settings, command names, and ribbon tooltips, with native language option names.
+- Keep translation offline and preserve filenames, release identifiers, content language routing, and saved frontmatter property names.
+- Add catalog, placeholder, error, installation progress, and UI language-switching regression checks.
+
 ## 1.2.14 — 2026-10-10
 
 - Also preserve existing 文章評分 and 文章推薦 frontmatter values, including blanks.

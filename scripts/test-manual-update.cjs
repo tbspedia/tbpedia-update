@@ -17,7 +17,7 @@ const { build } = require('esbuild');
     return mod.exports;
   }
   const { UpdateService } = await load('src/update-service.ts');
-  const data = { languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', tbpedia: 'V1' };
+  const data = { interfaceLanguage: 'en', languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', tbpedia: 'V1' };
   const service = new UpdateService({}, '1.2.0', () => data, async () => {});
   await service.getReleaseManifest(true);
   await service.getReleaseManifest(true);
