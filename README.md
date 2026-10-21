@@ -238,3 +238,23 @@ A missing deletion target is informational and does not prevent completion. For 
 ### Adding folders in a release
 
 List a folder in `files` with its vault-relative path and `change: "+"`, just as for a file (for example `{"path":"80 我的書架","change":"+"}`). Include the directory itself in the ZIP, including when it is empty. The installer detects ZIP directory entries, creates missing folders, and preserves existing folders and their contents. Files inside a folder must each be listed separately in the manifest. Folder deletion is not supported. Folder support requires plugin version 1.2.11 or newer.
+
+## Self-hosted NocoDB migration — 21 October 2026
+
+The live `tbpedia-update` Worker now uses `https://nocodb.tbpedia.org` through
+the `NOCODB_BASE_URL` secret. Its shared `CONFIG` KV namespace retains ID
+`c2eb669330e64a71927127a083c16826` and now contains:
+
+| Key | Migrated value |
+| --- | --- |
+| `nocodbtableid_Update` | `mowule5ssxrqhgh` |
+| `nocodbtableid_Updateinfo` | `m2ihdkr2m15cnnj` |
+| `nocodbapitoken` | Self-hosted API token, stored only server-side |
+
+The base is `pk5gkscsb1ke74u` in workspace `w18ay3wx`. The service endpoint
+remains `https://cfupdate.tbpedia.org`; installed plugins need no URL change.
+Keep `TRANSACTION_SECRET` and existing CORS settings when deploying.
+
+Cloudflare revision `6228ad5b-cad7-4edb-834c-fcf9a18420dc` serves 100% of traffic.
+Live transaction creation, source lookup and audit updates passed against the
+new database; temporary test records were removed. Worker code was unchanged.

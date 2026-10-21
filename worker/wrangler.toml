@@ -17,5 +17,5 @@ id = "c2eb669330e64a71927127a083c16826"
 CORS_ORIGINS = "app://obsidian.md,obsidian://app"
 
 # Set these using `wrangler secret put`, never in this file:
-# NOCODB_BASE_URL      e.g. https://nocodb.example.org
+# NOCODB_BASE_URL      https://nocodb.tbpedia.org
 # TRANSACTION_SECRET   random 32+ byte value used to authorize a transaction
