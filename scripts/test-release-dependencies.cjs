@@ -19,14 +19,24 @@ async function load(file) {
   const raw = structuredClone(original);
   raw.minimumPluginVersion = '1.2.0';
   const a = raw.releases[0].releaseId;
+  if (raw.releases.length < 2) {
+    const nextPublishedAt = new Date(Date.parse(raw.releases[0].publishedAt) + 86400000).toISOString();
+    raw.releases.push({
+      ...structuredClone(raw.releases[0]),
+      releaseId: `${a}-incremental`,
+      releaseVersion: 'incremental content',
+      publishedAt: nextPublishedAt,
+      dependsOn: [a],
+    });
+  }
   const b = raw.releases[1].releaseId;
   raw.releases[0].dependsOn = [];
   raw.releases[1].dependsOn = [];
-  const third = { ...structuredClone(raw.releases[1]), releaseId: 'zh-tw-reading-standard-2026-12-1.1', releaseVersion: 'zh-tw-reading-standard-2026.12.1', publishedAt: '2026-12-01T08:00:00Z', dependsOn: [b] };
+  const third = { ...structuredClone(raw.releases[1]), releaseId: 'zh-tw-reading-standard-2026-12-1.1', releaseVersion: 'incremental update', publishedAt: new Date(Date.parse(raw.releases[1].publishedAt) + 86400000).toISOString(), dependsOn: [b] };
   raw.releases.push(third);
   const manifest = parseAndValidateManifest(raw);
   assert.deepEqual(manifest.releases[1].dependsOn, []);
-  let data = { languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', tbpedia: 'V1', installed: { ownedFiles: {}, appliedReleaseIds: [], releaseVersion: '2026.9.30' } };
+  let data = { languageCode: 'zh-TW', seriesId: 'reading', editionId: 'standard', tbpedia: 'V1', installed: { ownedFiles: {}, appliedReleaseIds: [], trackingVersion: 2 } };
   const baseline = { releaseVersion: '2026.9.30', releaseId: '2026-9-30.1' };
   assert.deepEqual(initializeBaseRelease({ ...data, installed: { ...data.installed, appliedReleaseIds: ['2026-9-30.1', b], releaseVersion: '2026.11.1' } }), baseline);
   assert.deepEqual(initializeBaseRelease({ ...data, installed: { ...data.installed, trackingVersion: 2, appliedReleaseIds: [b], ownedFiles: { [b]: [] } } }), {});
@@ -47,7 +57,7 @@ async function load(file) {
   assert.deepEqual(selected(a, third.releaseId), [a, b, third.releaseId]);
   assert.throws(() => selected(), /Select at least/);
   assert.throws(() => selected('unknown'), /Unknown release/);
-  const legacyManifest = structuredClone(original);
+  const legacyManifest = structuredClone(raw);
   for (const release of legacyManifest.releases) delete release.dependsOn;
   const sequential = parseAndValidateManifest(legacyManifest);
   assert.deepEqual(service.getSelectedBatch(sequential, new Set([b])).releases.map((release) => release.releaseId), [a, b]);
@@ -81,7 +91,7 @@ async function load(file) {
   data.installed.appliedReleaseIds.push(a);
   assert.equal(service.isReleaseInstalled(release, manifest), true);
   // Legacy sequential state is preserved before switching to individual IDs.
-  data.installed = { ownedFiles: {}, appliedReleaseIds: [], releaseVersion: '2026.10.1', releaseId: '2026-10-1.1' };
+  data.installed = { ownedFiles: {}, appliedReleaseIds: [], releaseVersion: manifest.releases[0].releaseVersion, releaseId: a };
   await service.apply({ manifest, release, writes: release.files.map((file) => file.path), deletions: [] }, archive, () => {}, async () => 'overwrite');
   assert(data.installed.appliedReleaseIds.includes(a));
   assert(data.installed.appliedReleaseIds.includes(b));

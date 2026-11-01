@@ -15,13 +15,12 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   for (const field of REQUIRED_STRING_FIELDS) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Manifest field ${field} is invalid.`);
   if (!isRecord(input.tbpedia) || !isTbpediaPart(input.tbpedia.language, "code") || !isTbpediaPart(input.tbpedia.series, "id") || !isTbpediaPart(input.tbpedia.edition, "id")) throw new Error("tbpedia identity is invalid.");
   const tbpedia = input.tbpedia as ReleaseManifest["tbpedia"];
-  const releaseKey = [tbpedia.language.code, tbpedia.series.id, tbpedia.edition.id].join("-").toLowerCase();
   if (!Array.isArray(input.managedRoots) || !sameSet(input.managedRoots, [...MANAGED_ROOTS])) throw new Error("managedRoots does not match the approved boundary.");
   if (!Array.isArray(input.releases) || input.releases.length === 0) throw new Error("releases must be a non-empty array.");
 
   const existingPaths = new Set<string>();
   const releases = input.releases.map((entry) => {
-    const release = parseRelease(entry, releaseKey, existingPaths);
+    const release = parseRelease(entry, existingPaths);
     for (const file of release.files) {
       if (file.change === "-") existingPaths.delete(file.path);
       else existingPaths.add(file.path);
@@ -44,14 +43,9 @@ export function parseAndValidateManifest(input: unknown): ReleaseManifest {
   return { ...input, releases } as ReleaseManifest;
 }
 
-function parseRelease(input: unknown, expectedKey: string, existingPaths: Set<string>): ReleaseEntry {
+function parseRelease(input: unknown, existingPaths: Set<string>): ReleaseEntry {
   if (!isRecord(input)) throw new Error("Each release must be an object.");
   for (const field of ["releaseVersion", "releaseId", "publishedAt", "filename"] as const) if (typeof input[field] !== "string" || !input[field].trim()) throw new Error(`Release field ${field} is invalid.`);
-  const version = parseReleaseVersion(input.releaseVersion);
-  if (!version || version.key !== expectedKey) throw new Error(`releaseVersion must have the format ${expectedKey}-YYYY.M.D.`);
-  const releaseId = parseReleaseId(input.releaseId);
-  if (!releaseId || releaseId.key !== expectedKey) throw new Error(`releaseId must have the format ${expectedKey}-YYYY-M-D.sequence, for example ${expectedKey}-2026-10-1.1.`);
-  if (releaseId.year !== version.year || releaseId.month !== version.month || releaseId.day !== version.day) throw new Error("releaseId date must match releaseVersion.");
   if (Number.isNaN(Date.parse(input.publishedAt))) throw new Error("publishedAt must be ISO-8601.");
   const publishedDate = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.publishedAt);
   if (publishedDate && !validDate(Number(publishedDate[1]), Number(publishedDate[2]), Number(publishedDate[3]))) throw new Error("publishedAt must be a valid date in YYYY-MM-DD format.");
@@ -94,10 +88,9 @@ export function compareReleaseVersions(a: string, b: string): number {
   return compareDates(left, right);
 }
 export function compareRelease(a: ReleaseEntry, b: ReleaseEntry): number {
-  const version = compareReleaseVersions(a.releaseVersion, b.releaseVersion);
-  if (version) return version;
-  const sequence = parseReleaseId(a.releaseId)!.sequence - parseReleaseId(b.releaseId)!.sequence;
-  return sequence || Date.parse(a.publishedAt) - Date.parse(b.publishedAt);
+  const publication = Date.parse(a.publishedAt) - Date.parse(b.publishedAt);
+  if (publication) return publication;
+  return a.releaseId.localeCompare(b.releaseId);
 }
 function parseReleaseVersion(value: string): { key?: string; year: number; month: number; day: number } | undefined {
   const match = /^(?:([a-z0-9]+(?:-[a-z0-9]+)*)-)?(\d{4})\.(\d{1,2})\.(\d{1,2})$/.exec(value);
