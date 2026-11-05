@@ -40,10 +40,10 @@
   ],
   "releases": [
     {
-      "releaseVersion": "zh-tw-ri-v1-2026.11.1",
-      "releaseId": "zh-tw-ri-v1--2026-11-1.1",
-      "publishedAt": "2026-11-01",
-      "filename": "zh-tw-reading-simplified-v1-2026-11-1.1.zip",
+      "releaseVersion": "zh-tw-ri-v1-2026.9.30",
+      "releaseId": "zh-tw-ri-v1--2026-9-30.1",
+      "publishedAt": "2026-9-30",
+      "filename": "zh-tw-ri-v1-2026.9.30.zip",
       "files": [
         {
           "path": "01 文集部/308 永恒的星.md",
@@ -52,7 +52,7 @@
       ],
       "deletions": [],
       "releaseNotes": {
-        "summary": "測試：2026 年 11 月第 1 次增量更新。308 永恒的星.md",
+        "summary": "測試：2026 年 9 月 30 日 。第 1 次增量更新。308 永恒的星.md",
         "added": 1,
         "updated": 0,
         "removed": 0
