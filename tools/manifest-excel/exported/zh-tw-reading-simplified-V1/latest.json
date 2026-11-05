@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 2,
+  "product": "Tbpedia-Distribute",
+  "plugin": "tbpedia-update",
+  "channel": "stable",
+  "title": "真佛百科閱讀系列簡易版本",
+  "tbpedia": {
+    "language": {
+      "code": "zh-TW"
+    },
+    "series": {
+      "id": "reading"
+    },
+    "edition": {
+      "id": "simplified"
+    }
+  },
+  "Collection": "V1",
+  "minimumPluginVersion": "1.2.0",
+  "minimumObsidianVersion": "1.6.0",
+  "managedRoots": [
+    "00 說明",
+    "01 文集部",
+    "02 開示部",
+    "03 經藏部",
+    "04 頌與戒律",
+    "05 傳法部",
+    "06 密法儀軌",
+    "07 佛語典藏",
+    "08 其他類別",
+    "09 蓮香上師",
+    "10 真佛宗",
+    "20 專題",
+    "50 列表",
+    "60 導讀",
+    "70 背景資料",
+    "90 幫助",
+    "98 下載資料",
+    "99 Setting"
+  ],
+  "releases": [
+    {
+      "releaseVersion": "zh-tw-reading-simplified-2026.10.1",
+      "releaseId": "zh-tw-reading-simplified-2026-10-1.1",
+      "publishedAt": "2026-10-01",
+      "filename": "zh-tw-reading-s-2026-10-1.1.zip",
+      "files": [
+        {
+          "path": "01 文集部/測試更新-2026-10-1.md",
+          "change": "+"
+        }
+      ],
+      "deletions": [],
+      "releaseNotes": {
+        "summary": "測試：2026 年 10 月第 1 次增量更新。",
+        "added": 1,
+        "updated": 0,
+        "removed": 0
+      },
+      "dependsOn": []
+    },
+    {
+      "releaseVersion": "zh-tw-reading-standard-2026.11.1",
+      "releaseId": "zh-tw-reading-standard-2026-11-1.2",
+      "publishedAt": "2026-11-01",
+      "filename": "zh-tw-reading-standard-2026-11-1.2.zip",
+      "files": [
+        {
+          "path": "01 文集部/測試更新-2026-11-1.md",
+          "change": "+"
+        }
+      ],
+      "deletions": [],
+      "releaseNotes": {
+        "summary": "測試：2026 年 11 月第 1 次增量更新。",
+        "added": 1,
+        "updated": 0,
+        "removed": 0
+      },
+      "dependsOn": []
+    },
+    {
+      "releaseVersion": "zh-tw-reading-standard-2026.11.10",
+      "releaseId": "zh-tw-reading-standard-2026-11-10.3",
+      "publishedAt": "2026-11-01",
+      "filename": "zh-tw-reading-standard-2026-11-10.3.zip",
+      "files": [
+        {
+          "path": ".obsidian/fonts/LXGWWenKaiTC-Regular.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/NotoSansTC-VariableFont_wght.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/NotoSerifTC-Regular.ttf",
+          "change": "+"
+        },
+        {
+          "path": ".obsidian/fonts/ToneOZ-Tsuipita-TC.ttf",
+          "change": "+"
+        }
+      ],
+      "deletions": [
+        "00 說明/搜索 (search) 9.md",
+        "00 說明/搜索 (search) 8.md"
+      ],
+      "releaseNotes": {
+        "summary": "測試：2026 年 11 月 10 日第 3 次增量更新。",
+        "added": 4,
+        "updated": 0,
+        "removed": 2
+      },
+      "dependsOn": []
+    },
+    {
+      "releaseVersion": "zh-tw-reading-standard-2026.11.21",
+      "releaseId": "zh-tw-reading-standard-2026-11-21.4",
+      "publishedAt": "2026-11-21",
+      "filename": "zh-tw-reading-standard-2026-11-21.4.zip",
+      "files": [
+        {
+          "path": "我的書架",
+          "change": "+"
+        },
+        {
+          "path": "90 幫助/6 如何應用真佛翻譯器 True Buddha Pedia Translator.md",
+          "change": "+"
+        }
+      ],
+      "deletions": [
+        "00 說明/搜索 (search) 7.md"
+      ],
+      "releaseNotes": {
+        "summary": "測試：2026 年 11 月 21 日第 4 次增量更新。",
+        "added": 2,
+        "updated": 0,
+        "removed": 1
+      },
+      "dependsOn": [
+        "zh-tw-reading-standard-2026-11-10.3"
+      ]
+    }
+  ]
+}

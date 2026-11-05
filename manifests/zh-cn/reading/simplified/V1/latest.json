@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 2,
+  "product": "Tbpedia-Distribute",
+  "plugin": "tbpedia-update",
+  "channel": "stable",
+  "title": "真佛百科阅读系列简易版中文繁体V1",
+  "tbpedia": {
+    "language": {
+      "code": "zh-CN"
+    },
+    "series": {
+      "id": "reading"
+    },
+    "edition": {
+      "id": "simplified"
+    }
+  },
+  "Collection": "V1",
+  "minimumPluginVersion": "1.2.0",
+  "minimumObsidianVersion": "1.6.0",
+  "managedRoots": [
+    "00 说明",
+    "01 文集部",
+    "02 开示部",
+    "03 经藏部",
+    "04 颂与戒律",
+    "05 传法部",
+    "06 密法仪轨",
+    "07 佛语典藏",
+    "08 其他类别",
+    "09 莲香上师",
+    "10 真佛宗",
+    "20 专题",
+    "50 列表",
+    "60 导读",
+    "70 背景资料",
+    "90 帮助",
+    "98 下载资料",
+    "99 Setting"
+  ],
+  "releases": [
+    {
+      "releaseVersion": "zh-cn-ri-v1-2026.11.1",
+      "releaseId": "zh-cn-ri-v1--2026-11-1.1",
+      "publishedAt": "2026-11-01",
+      "filename": "zh-cn-reading-simplified-v1-2026-11-1.1.zip",
+      "files": [
+        {
+          "path": "01 文集部/308 永恒的星.md",
+          "change": "+"
+        }
+      ],
+      "deletions": [],
+      "releaseNotes": {
+        "summary": "测试：2026 年 11 月第 1 次增量更新。308 永恒的星.md",
+        "added": 1,
+        "updated": 0,
+        "removed": 0
+      },
+      "dependsOn": []
+    }
+  ]
+}
